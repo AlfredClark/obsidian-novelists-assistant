@@ -6,6 +6,11 @@
   "settings_language_option_app": "跟随系统",
   "settings_language_option_zh": "中文",
   "settings_language_option_en": "English",
+  "settings_typesetting": "排版",
+  "settings_indent": "缩进",
+  "settings_indent_desc": "缩进字符数",
+  "settings_line_height": "行高",
+  "settings_line_height_desc": "行高度",
   "settings_about": "关于",
   "settings_version": "版本"
 }

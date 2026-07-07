@@ -1,10 +1,10 @@
 import { getLanguage, PluginSettingTab, Setting, type SettingDefinitionItem } from "obsidian";
 import { ObsidianPlugin } from "./types";
-import { setLocale, toLocale, baseLocale, locales } from "../i18n/paraglide/runtime";
 import * as m from "../i18n/paraglide/messages";
+import { setLocale, toLocale, baseLocale } from "../i18n/paraglide/runtime";
 
 /** 插件设置页 */
-export class TemplatePluginSettingTab extends PluginSettingTab {
+export class CorePluginSettingTab extends PluginSettingTab {
   plugin: ObsidianPlugin;
 
   constructor(plugin: ObsidianPlugin) {
@@ -21,29 +21,43 @@ export class TemplatePluginSettingTab extends PluginSettingTab {
         type: "group",
         items: [
           {
-            /** 语言下拉框 */
+            /** 语言 */
             name: m.settings_language(),
             desc: m.settings_language_desc(),
-            render: (setting: Setting) => {
-              setting.addDropdown((dropdown) => {
-                dropdown.addOption("app", m.settings_language_option_app());
-                for (const locale of locales) {
-                  const key = `settings_language_option_${locale}` as const;
-                  dropdown.addOption(locale, m[key]());
-                }
-                dropdown.setValue(this.plugin.settings.locale);
-                dropdown.onChange(async (value) => {
-                  this.plugin.settings.locale = value as "app" | (typeof locales)[number];
-                  await this.plugin.saveSettings();
-                  if (value === "app") {
-                    await setLocale(toLocale(getLanguage()) ?? baseLocale, { reload: false });
-                  } else {
-                    await setLocale(toLocale(value) ?? baseLocale, { reload: false });
-                  }
-                  /** 切换语言后刷新设置页 UI */
-                  this.update();
-                });
-              });
+            control: {
+              key: "locale",
+              type: "dropdown",
+              defaultValue: "app",
+              options: {
+                app: m.settings_language_option_app(),
+                en: m.settings_language_option_en(),
+                zh: m.settings_language_option_zh(),
+              },
+            },
+          },
+        ],
+      },
+      {
+        /** 排版分组 */
+        heading: m.settings_typesetting(),
+        type: "group",
+        items: [
+          {
+            /** 缩进 */
+            name: m.settings_indent(),
+            desc: m.settings_indent_desc(),
+            control: { key: "indent", type: "slider", min: 0, max: 4, step: 1, defaultValue: 2 },
+          },
+          {
+            name: m.settings_line_height(),
+            desc: m.settings_line_height_desc(),
+            control: {
+              key: "lineHeight",
+              type: "slider",
+              min: 1,
+              max: 3,
+              step: 0.25,
+              defaultValue: 2,
             },
           },
         ],
@@ -66,9 +80,38 @@ export class TemplatePluginSettingTab extends PluginSettingTab {
       },
     ];
   }
+
+  async setControlValue(key: string, value: unknown) {
+    await super.setControlValue(key, value);
+    switch (key) {
+      case "locale":
+        if (value === "app") {
+          await setLocale(toLocale(getLanguage()) ?? baseLocale, { reload: false });
+        } else {
+          await setLocale(toLocale(value) ?? baseLocale, { reload: false });
+        }
+        break;
+      case "indent":
+        window.document.documentElement.style.setProperty(
+          "--novel-typesetting-indent",
+          `${this.plugin.settings.indent}rem`,
+        );
+        break;
+      case "lineHeight":
+        window.document.documentElement.style.setProperty(
+          "--novel-typesetting-line-height",
+          `${this.plugin.settings.lineHeight}rem`,
+        );
+        break;
+
+      default:
+        break;
+    }
+    this.update();
+  }
 }
 
 /** 将设置页注册到 Obsidian */
 export async function addSettingTab(plugin: ObsidianPlugin) {
-  plugin.addSettingTab(new TemplatePluginSettingTab(plugin));
+  plugin.addSettingTab(new CorePluginSettingTab(plugin));
 }

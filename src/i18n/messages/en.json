@@ -6,6 +6,11 @@
   "settings_language_option_app": "Follow System",
   "settings_language_option_zh": "中文",
   "settings_language_option_en": "English",
+  "settings_typesetting": "Typesetting",
+  "settings_indent": "Indent",
+  "settings_indent_desc": "Indented character count",
+  "settings_line_height": "Line Height",
+  "settings_line_height_desc": "Line height",
   "settings_about": "About",
   "settings_version": "Version"
 }

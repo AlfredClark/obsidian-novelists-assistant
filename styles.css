@@ -6,3 +6,13 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+:root {
+  --novel-typesetting-indent: 2rem;
+  --novel-typesetting-line-height: 2rem;
+}
+
+.novel-typesetting .markdown-source-view .cm-content {
+  position: relative;
+  text-indent: var(--novel-typesetting-indent, 2rem);
+  line-height: var(--novel-typesetting-line-height, 2rem);
+}
