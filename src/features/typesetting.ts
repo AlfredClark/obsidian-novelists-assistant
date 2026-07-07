@@ -1,13 +1,11 @@
 import { ObsidianPlugin } from "../core/types";
 
 export async function initTypesetting(plugin: ObsidianPlugin) {
-  window.document.documentElement.addClass("novel-typesetting");
-  window.document.documentElement.style.setProperty(
-    "--novel-typesetting-indent",
-    `${plugin.settings.indent}rem`,
-  );
+  const { typesettingEnabled, indent, lineHeight } = plugin.settings;
+  window.document.documentElement.toggleClass("novel-typesetting", typesettingEnabled);
+  window.document.documentElement.style.setProperty("--novel-typesetting-indent", `${indent}rem`);
   window.document.documentElement.style.setProperty(
     "--novel-typesetting-line-height",
-    `${plugin.settings.lineHeight}rem`,
+    `${lineHeight}rem`,
   );
 }

@@ -9,15 +9,28 @@ export type Settings = {
   /** 语言："app" 跟随系统，或具体语言代码 */
   locale: "app" | (typeof locales)[number];
   /** 排版 */
+  typesettingEnabled: boolean;
   indent: number;
   lineHeight: number;
+  /** 网格线 */
+  gridlinesEnabled: boolean;
+  gridlinesSize: number;
+  gridlinesRatio: number;
+  gridlinesThick: number;
+  gridlinesOpacity: number;
 };
 
 /** 默认配置 */
 export const DEFAULT_SETTINGS: Settings = {
   locale: "app",
+  typesettingEnabled: true,
   indent: 2,
   lineHeight: 2,
+  gridlinesEnabled: true,
+  gridlinesSize: 5,
+  gridlinesRatio: 2,
+  gridlinesThick: 1,
+  gridlinesOpacity: 50,
 };
 
 /** 插件基类，持有类型化的 settings 属性 */

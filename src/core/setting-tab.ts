@@ -43,14 +43,21 @@ export class CorePluginSettingTab extends PluginSettingTab {
         type: "group",
         items: [
           {
+            name: m.settings_typesetting_enabled(),
+            desc: m.settings_typesetting_enabled_desc(),
+            control: { key: "typesettingEnabled", type: "toggle", defaultValue: true },
+          },
+          {
             /** 缩进 */
             name: m.settings_indent(),
             desc: m.settings_indent_desc(),
+            visible: this.plugin.settings.typesettingEnabled,
             control: { key: "indent", type: "slider", min: 0, max: 4, step: 1, defaultValue: 2 },
           },
           {
             name: m.settings_line_height(),
             desc: m.settings_line_height_desc(),
+            visible: this.plugin.settings.typesettingEnabled,
             control: {
               key: "lineHeight",
               type: "slider",
@@ -58,6 +65,70 @@ export class CorePluginSettingTab extends PluginSettingTab {
               max: 3,
               step: 0.25,
               defaultValue: 2,
+            },
+          },
+        ],
+      },
+      {
+        /** 网格线分组 */
+        heading: m.settings_gridlines(),
+        type: "group",
+        items: [
+          {
+            name: m.settings_gridlines_enabled(),
+            desc: m.settings_gridlines_enabled_desc(),
+            control: { key: "gridlinesEnabled", type: "toggle", defaultValue: true },
+          },
+          {
+            name: m.settings_gridlines_size(),
+            desc: m.settings_gridlines_size_desc(),
+            visible: this.plugin.settings.gridlinesEnabled,
+            control: {
+              key: "gridlinesSize",
+              type: "slider",
+              min: 1,
+              max: 10,
+              step: 1,
+              defaultValue: 5,
+            },
+          },
+          {
+            name: m.settings_gridlines_ratio(),
+            desc: m.settings_gridlines_ratio_desc(),
+            visible: this.plugin.settings.gridlinesEnabled,
+            control: {
+              key: "gridlinesRatio",
+              type: "slider",
+              min: 1,
+              max: 5,
+              step: 1,
+              defaultValue: 2,
+            },
+          },
+          {
+            name: m.settings_gridlines_thick(),
+            desc: m.settings_gridlines_thick_desc(),
+            visible: this.plugin.settings.gridlinesEnabled,
+            control: {
+              key: "gridlinesThick",
+              type: "slider",
+              min: 1,
+              max: 5,
+              step: 1,
+              defaultValue: 1,
+            },
+          },
+          {
+            name: m.settings_gridlines_opacity(),
+            desc: m.settings_gridlines_opacity_desc(),
+            visible: this.plugin.settings.gridlinesEnabled,
+            control: {
+              key: "gridlinesOpacity",
+              type: "slider",
+              min: 0,
+              max: 100,
+              step: 5,
+              defaultValue: 50,
             },
           },
         ],
@@ -91,6 +162,12 @@ export class CorePluginSettingTab extends PluginSettingTab {
           await setLocale(toLocale(value) ?? baseLocale, { reload: false });
         }
         break;
+      case "typesettingEnabled":
+        window.document.documentElement.toggleClass(
+          "novel-typesetting",
+          this.plugin.settings.typesettingEnabled,
+        );
+        break;
       case "indent":
         window.document.documentElement.style.setProperty(
           "--novel-typesetting-indent",
@@ -101,6 +178,40 @@ export class CorePluginSettingTab extends PluginSettingTab {
         window.document.documentElement.style.setProperty(
           "--novel-typesetting-line-height",
           `${this.plugin.settings.lineHeight}rem`,
+        );
+        break;
+      case "gridlinesEnabled":
+        window.document.documentElement.toggleClass(
+          "novel-gridlines",
+          this.plugin.settings.gridlinesEnabled,
+        );
+        break;
+      case "gridlinesSize":
+        window.document.documentElement.style.setProperty(
+          "--novel-gridlines-size",
+          `${this.plugin.settings.gridlinesSize}px`,
+        );
+        window.document.documentElement.style.setProperty(
+          "--novel-gridlines-space",
+          `${this.plugin.settings.gridlinesSize * this.plugin.settings.gridlinesRatio}px`,
+        );
+        break;
+      case "gridlinesRatio":
+        window.document.documentElement.style.setProperty(
+          "--novel-gridlines-space",
+          `${this.plugin.settings.gridlinesSize * this.plugin.settings.gridlinesRatio}px`,
+        );
+        break;
+      case "gridlinesThick":
+        window.document.documentElement.style.setProperty(
+          "--novel-gridlines-thick",
+          `${this.plugin.settings.gridlinesThick}px`,
+        );
+        break;
+      case "gridlinesOpacity":
+        window.document.documentElement.style.setProperty(
+          "--novel-gridlines-opacity",
+          `${this.plugin.settings.gridlinesOpacity}%`,
         );
         break;
 
