@@ -1,10 +1,9 @@
 import { ObsidianPlugin } from "./types";
 import { registerLocales } from "./locales";
-import { initSettings } from "./settings";
 import { addSettingTab } from "./setting-tab";
 
+/** 注册插件的核心功能：配置、语言、设置页 */
 export async function registerCore(plugin: ObsidianPlugin) {
-  await initSettings(plugin);
   await registerLocales(plugin);
   await addSettingTab(plugin);
 }

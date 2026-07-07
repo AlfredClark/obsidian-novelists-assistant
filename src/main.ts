@@ -1,8 +1,10 @@
 import { ObsidianPlugin } from "./core/types";
 import { registerCore } from "./core";
 
-export default class TemplatePlugin extends ObsidianPlugin {
+/** 插件主入口 */
+export default class NovelistsAssistantPlugin extends ObsidianPlugin {
   async onload() {
+    await this.initSettings();
     await registerCore(this);
   }
 }

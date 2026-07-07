@@ -2,10 +2,10 @@ import { BaseComponent } from "obsidian";
 import { mount, Component, unmount } from "svelte";
 
 /**
- * Bridges a Svelte component into the Obsidian settings UI.
+ * 将 Svelte 组件桥接到 Obsidian 设置 UI
  *
- * Wraps a Svelte component as an Obsidian BaseComponent so it can be
- * passed to `Setting.addComponent`. Handles mount / unmount lifecycle.
+ * 包装为 Obsidian BaseComponent，可传入 Setting.addComponent 使用。
+ * 自动处理 mount / unmount 生命周期。
  */
 export class ObsidianSvelteComponent extends BaseComponent {
   instance: Record<string, unknown>;
@@ -32,7 +32,7 @@ export class ObsidianSvelteComponent extends BaseComponent {
 }
 
 /**
- * Create Obsidian BaseComponent by HTML tag and option
+ * 通过 HTML 标签名与选项创建原生元素，包装为 BaseComponent
  */
 export class HTMLComponent extends BaseComponent {
   constructor(el: HTMLElement, tag: keyof HTMLElementTagNameMap, option: DomElementInfo) {
