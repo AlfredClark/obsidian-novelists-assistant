@@ -11,5 +11,4 @@ export const DEFAULT_SETTINGS: Settings = {
 
 export class ObsidianPlugin extends Plugin {
   declare settings: Settings;
-  commands_ids: string[] | undefined;
 }

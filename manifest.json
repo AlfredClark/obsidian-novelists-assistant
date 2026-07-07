@@ -1,9 +1,9 @@
 {
-	"id": "obsidian-plugin-template",
-	"name": "Obsidian Plugin Template",
-	"version": "0.6.0",
+	"id": "obsidian-novelists-assistant",
+	"name": "Novelists Assistant",
+	"version": "0.1.0",
 	"minAppVersion": "1.13.0",
-	"description": "A Vite based Obsidian plugin development template.",
+	"description": "An Obsidian Plugin to Help Chinese Novelists Create Better Works",
 	"isDesktopOnly": true,
 	"author": "Alfred Clark",
 	"authorUrl": "https://github.com/AlfredClark",

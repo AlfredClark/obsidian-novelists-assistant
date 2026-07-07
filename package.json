@@ -1,8 +1,8 @@
 {
-  "name": "obsidian-plugin-template",
-  "version": "0.6.0",
-  "description": "A Vite based Obsidian plugin development template",
-  "homepage": "https://github.com/AlfredClark/obsidian-plugin-template",
+  "name": "obsidian-novelists-assistant",
+  "version": "0.1.0",
+  "description": "An Obsidian Plugin to Help Chinese Novelists Create Better Works",
+  "homepage": "https://github.com/AlfredClark/obsidian-novelists-assistant",
   "author": {
     "name": "Alfred Clark",
     "email": "alfredclark@163.com",
