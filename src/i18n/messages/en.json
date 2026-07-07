@@ -1,0 +1,10 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "settings_general": "General",
+  "settings_language": "Language",
+  "settings_language_desc": "Set the plugin language",
+  "settings_about": "About",
+  "settings_version": "Version",
+  "sidebar_title": "Welcome to the sidebar view",
+  "sidebar_content": "This is a sidebar view created by the plugin."
+}

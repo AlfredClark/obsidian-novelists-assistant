@@ -1,0 +1,11 @@
+{
+	"id": "obsidian-plugin-template",
+	"name": "Obsidian Plugin Template",
+	"version": "0.6.0",
+	"minAppVersion": "1.13.0",
+	"description": "A Vite based Obsidian plugin development template.",
+	"isDesktopOnly": true,
+	"author": "Alfred Clark",
+	"authorUrl": "https://github.com/AlfredClark",
+	"fundingUrl": ""
+}

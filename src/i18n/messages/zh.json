@@ -1,0 +1,10 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "settings_general": "常规",
+  "settings_language": "语言",
+  "settings_language_desc": "设置插件语言",
+  "settings_about": "关于",
+  "settings_version": "版本",
+  "sidebar_title": "欢迎来到侧边栏视图",
+  "sidebar_content": "这是插件创建的侧边栏视图。"
+}
