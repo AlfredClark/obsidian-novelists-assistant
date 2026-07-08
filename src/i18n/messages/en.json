@@ -25,5 +25,7 @@
   "settings_line_height": "Line Height",
   "settings_line_height_desc": "Line height",
   "settings_about": "About",
-  "settings_version": "Version"
+  "settings_version": "Version",
+  "settings_fold": "Fold Settings",
+  "settings_fold_desc": "Whether to fold settings items"
 }

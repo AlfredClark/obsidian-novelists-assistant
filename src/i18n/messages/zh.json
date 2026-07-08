@@ -25,5 +25,7 @@
   "settings_line_height": "行高",
   "settings_line_height_desc": "行高度",
   "settings_about": "关于",
-  "settings_version": "版本"
+  "settings_version": "版本",
+  "settings_fold": "折叠设置",
+  "settings_fold_desc": "是否折叠设置页面的设置项"
 }

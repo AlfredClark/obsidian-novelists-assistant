@@ -6,10 +6,12 @@ import { setLocale, toLocale, baseLocale } from "../i18n/paraglide/runtime";
 /** 插件设置页 */
 export class CorePluginSettingTab extends PluginSettingTab {
   plugin: ObsidianPlugin;
+  foldSettings: unknown;
 
   constructor(plugin: ObsidianPlugin) {
     super(plugin.app, plugin);
     this.plugin = plugin;
+    this.foldSettings = plugin.settings.foldSettings;
   }
 
   /** 返回声明式设置定义，Obsidian 自动渲染 */
@@ -35,12 +37,19 @@ export class CorePluginSettingTab extends PluginSettingTab {
               },
             },
           },
+          {
+            /** 折叠设置 */
+            name: m.settings_fold(),
+            desc: m.settings_fold_desc(),
+            control: { key: "foldSettings", type: "toggle", defaultValue: false },
+          },
         ],
       },
       {
         /** 排版分组 */
+        name: m.settings_typesetting(),
         heading: m.settings_typesetting(),
-        type: "group",
+        type: this.foldSettings ? "page" : "group",
         items: [
           {
             name: m.settings_typesetting_enabled(),
@@ -52,14 +61,21 @@ export class CorePluginSettingTab extends PluginSettingTab {
             name: m.settings_indent(),
             desc: m.settings_indent_desc(),
             visible: this.plugin.settings.typesettingEnabled,
-            control: { key: "indent", type: "slider", min: 0, max: 4, step: 1, defaultValue: 2 },
+            control: {
+              key: "typesettingIndent",
+              type: "slider",
+              min: 0,
+              max: 4,
+              step: 1,
+              defaultValue: 2,
+            },
           },
           {
             name: m.settings_line_height(),
             desc: m.settings_line_height_desc(),
             visible: this.plugin.settings.typesettingEnabled,
             control: {
-              key: "lineHeight",
+              key: "typesettingLineHeight",
               type: "slider",
               min: 1,
               max: 3,
@@ -71,8 +87,9 @@ export class CorePluginSettingTab extends PluginSettingTab {
       },
       {
         /** 网格线分组 */
+        name: m.settings_gridlines(),
         heading: m.settings_gridlines(),
-        type: "group",
+        type: this.foldSettings ? "page" : "group",
         items: [
           {
             name: m.settings_gridlines_enabled(),
@@ -136,7 +153,8 @@ export class CorePluginSettingTab extends PluginSettingTab {
       {
         /** 关于页面 */
         name: m.settings_about(),
-        type: "page",
+        heading: m.settings_about(),
+        type: this.foldSettings ? "page" : "group",
         items: [
           {
             /** 版本号 */
@@ -152,41 +170,52 @@ export class CorePluginSettingTab extends PluginSettingTab {
     ];
   }
 
+  /** 设置项变更时触发：更新运行时状态并刷新设置页 */
   async setControlValue(key: string, value: unknown) {
     await super.setControlValue(key, value);
     switch (key) {
       case "locale":
+        // 语言切换：跟随系统或手动选择
         if (value === "app") {
           await setLocale(toLocale(getLanguage()) ?? baseLocale, { reload: false });
         } else {
           await setLocale(toLocale(value) ?? baseLocale, { reload: false });
         }
         break;
+      case "foldSettings":
+        // 折叠设置：缓存值用于控制分组是否为 page 类型
+        this.foldSettings = value;
+        break;
       case "typesettingEnabled":
+        // 切换排版 CSS class
         window.document.documentElement.toggleClass(
           "novel-typesetting",
           this.plugin.settings.typesettingEnabled,
         );
         break;
-      case "indent":
+      case "typesettingIndent":
+        // 更新段落缩进 CSS 变量
         window.document.documentElement.style.setProperty(
           "--novel-typesetting-indent",
-          `${this.plugin.settings.indent}rem`,
+          `${this.plugin.settings.typesettingIndent}rem`,
         );
         break;
-      case "lineHeight":
+      case "typesettingLineHeight":
+        // 更新行高 CSS 变量
         window.document.documentElement.style.setProperty(
           "--novel-typesetting-line-height",
-          `${this.plugin.settings.lineHeight}rem`,
+          `${this.plugin.settings.typesettingLineHeight}rem`,
         );
         break;
       case "gridlinesEnabled":
+        // 切换网格线 CSS class
         window.document.documentElement.toggleClass(
           "novel-gridlines",
           this.plugin.settings.gridlinesEnabled,
         );
         break;
       case "gridlinesSize":
+        // 更新网格单元格大小及间距 CSS 变量
         window.document.documentElement.style.setProperty(
           "--novel-gridlines-size",
           `${this.plugin.settings.gridlinesSize}px`,
@@ -197,18 +226,21 @@ export class CorePluginSettingTab extends PluginSettingTab {
         );
         break;
       case "gridlinesRatio":
+        // 更新网格间距倍数 CSS 变量
         window.document.documentElement.style.setProperty(
           "--novel-gridlines-space",
           `${this.plugin.settings.gridlinesSize * this.plugin.settings.gridlinesRatio}px`,
         );
         break;
       case "gridlinesThick":
+        // 更新网格线粗细 CSS 变量
         window.document.documentElement.style.setProperty(
           "--novel-gridlines-thick",
           `${this.plugin.settings.gridlinesThick}px`,
         );
         break;
       case "gridlinesOpacity":
+        // 更新网格线不透明度 CSS 变量
         window.document.documentElement.style.setProperty(
           "--novel-gridlines-opacity",
           `${this.plugin.settings.gridlinesOpacity}%`,
