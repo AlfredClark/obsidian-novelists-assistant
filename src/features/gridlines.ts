@@ -24,3 +24,8 @@ export async function initGridlines(plugin: ObsidianPlugin) {
     `${gridlinesOpacity}%`,
   );
 }
+
+/** 卸载网格线功能：清除网格线相关的 CSS class */
+export function unloadGridlines() {
+  window.document.documentElement.removeClass("novel-gridlines");
+}

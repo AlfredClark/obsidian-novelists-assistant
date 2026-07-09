@@ -16,3 +16,8 @@ export async function initTypesetting(plugin: ObsidianPlugin) {
     `${typesettingLineHeight}rem`,
   );
 }
+
+/** 卸载排版功能：清除排版相关的 CSS class */
+export function unloadTypesetting() {
+  window.document.documentElement.removeClass("novel-typesetting");
+}

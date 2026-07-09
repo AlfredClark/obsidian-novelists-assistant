@@ -6,4 +6,10 @@ export default class NovelistsAssistantPlugin extends ObsidianPlugin {
   async onload() {
     await this.initPlugin();
   }
+
+  /** 插件卸载时触发，清理所有功能和资源 */
+  onunload() {
+    super.onunload();
+    this.unloadPlugin();
+  }
 }

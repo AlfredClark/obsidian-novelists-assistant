@@ -27,5 +27,10 @@
   "settings_about": "关于",
   "settings_version": "版本",
   "settings_fold": "折叠设置",
-  "settings_fold_desc": "是否折叠设置页面的设置项"
+  "settings_fold_desc": "是否折叠设置页面的设置项",
+  "settings_word_count": "字数统计",
+  "settings_word_count_enabled": "启用字数统计",
+  "settings_word_count_enabled_desc": "在文件列表显示字数统计",
+  "settings_word_count_suffix": "字数统计后缀",
+  "settings_word_count_suffix_desc": "字数统计显示的后缀"
 }

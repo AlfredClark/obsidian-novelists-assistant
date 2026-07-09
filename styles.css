@@ -43,3 +43,12 @@ If your plugin does not need CSS, delete this file.
       transparent var(--novel-gridlines-space)
   );
 }
+
+.nav-file-title .word-count {
+  display: none;
+}
+
+.novel-word-count .nav-file-title .word-count {
+  display: flex;
+  margin-left: auto
+}

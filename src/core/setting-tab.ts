@@ -2,6 +2,7 @@ import { getLanguage, PluginSettingTab, Setting, type SettingDefinitionItem } fr
 import { ObsidianPlugin } from "./types";
 import * as m from "../i18n/paraglide/messages";
 import { setLocale, toLocale, baseLocale } from "../i18n/paraglide/runtime";
+import { resetWordCount } from "../features/word-count";
 
 /** 插件设置页 */
 export class CorePluginSettingTab extends PluginSettingTab {
@@ -145,8 +146,26 @@ export class CorePluginSettingTab extends PluginSettingTab {
               min: 0,
               max: 100,
               step: 5,
-              defaultValue: 50,
+              defaultValue: 75,
             },
+          },
+        ],
+      },
+      {
+        /** 字数统计分组 */
+        name: m.settings_word_count(),
+        heading: m.settings_word_count(),
+        type: this.foldSettings ? "page" : "group",
+        items: [
+          {
+            name: m.settings_word_count_enabled(),
+            desc: m.settings_word_count_enabled_desc(),
+            control: { key: "wordCountEnabled", type: "toggle", defaultValue: true },
+          },
+          {
+            name: m.settings_word_count_suffix(),
+            desc: m.settings_word_count_suffix_desc(),
+            control: { key: "wordCountSuffix", type: "text", defaultValue: "字" },
           },
         ],
       },
@@ -238,6 +257,17 @@ export class CorePluginSettingTab extends PluginSettingTab {
           "--novel-gridlines-thick",
           `${this.plugin.settings.gridlinesThick}px`,
         );
+        break;
+      case "wordCountEnabled":
+        // 切换字数统计 CSS class
+        window.document.documentElement.toggleClass(
+          "novel-word-count",
+          this.plugin.settings.wordCountEnabled,
+        );
+        break;
+      case "wordCountSuffix":
+        // 重置字数统计功能
+        await resetWordCount(this.plugin);
         break;
       case "gridlinesOpacity":
         // 更新网格线不透明度 CSS 变量

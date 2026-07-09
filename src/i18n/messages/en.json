@@ -27,5 +27,10 @@
   "settings_about": "About",
   "settings_version": "Version",
   "settings_fold": "Fold Settings",
-  "settings_fold_desc": "Whether to fold settings items"
+  "settings_fold_desc": "Whether to fold settings items",
+  "settings_word_count": "Word Count",
+  "settings_word_count_enabled": "Enable Word Count",
+  "settings_word_count_enabled_desc": "Show word count in the file list",
+  "settings_word_count_suffix": "Word Count Suffix",
+  "settings_word_count_suffix_desc": "The suffix shown in word count"
 }

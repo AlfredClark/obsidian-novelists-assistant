@@ -1,7 +1,7 @@
 import { Plugin } from "obsidian";
 import { locales } from "../i18n/paraglide/runtime";
 import { initCore } from "./index";
-import { initFeatures } from "../features";
+import { initFeatures, unloadFeatures } from "../features";
 
 /** 插件配置项 */
 export type Settings = {
@@ -25,6 +25,10 @@ export type Settings = {
   gridlinesThick: number;
   /** 网格线不透明度（%） */
   gridlinesOpacity: number;
+  /** 字数统计 */
+  wordCountEnabled: boolean;
+  /** 字数后缀 */
+  wordCountSuffix: string;
 };
 
 /** 默认配置 */
@@ -38,14 +42,16 @@ export const DEFAULT_SETTINGS: Settings = {
   gridlinesSize: 5,
   gridlinesRatio: 2,
   gridlinesThick: 1,
-  gridlinesOpacity: 50,
+  gridlinesOpacity: 75,
+  wordCountEnabled: true,
+  wordCountSuffix: "字",
 };
 
 /** 插件基类，持有类型化的 settings 属性 */
 export class ObsidianPlugin extends Plugin {
   declare settings: Settings;
 
-  /** 从磁盘加载保存的配置，与默认配置合并后挂载到 this.settings */
+  /** 初始化插件并从磁盘加载保存的配置，与默认配置合并后挂载到 this.settings */
   async initPlugin() {
     this.settings = Object.assign(
       {},
@@ -60,5 +66,10 @@ export class ObsidianPlugin extends Plugin {
   /** 将 this.settings 保存至磁盘中的配置文件中 */
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  /** 卸载插件及相关功能 */
+  unloadPlugin() {
+    unloadFeatures(this);
   }
 }
