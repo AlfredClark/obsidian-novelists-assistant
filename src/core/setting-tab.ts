@@ -2,7 +2,7 @@ import { getLanguage, PluginSettingTab, Setting, type SettingDefinitionItem } fr
 import { ObsidianPlugin } from "./types";
 import * as m from "../i18n/paraglide/messages";
 import { setLocale, toLocale, baseLocale } from "../i18n/paraglide/runtime";
-import { resetWordCount } from "../features/word-count";
+import { resetWordCount } from "../features/wordcount";
 
 /** 插件设置页 */
 export class CorePluginSettingTab extends PluginSettingTab {
@@ -48,22 +48,22 @@ export class CorePluginSettingTab extends PluginSettingTab {
       },
       {
         /** 排版分组 */
-        name: m.settings_typesetting(),
-        heading: m.settings_typesetting(),
+        name: m.settings_typeset(),
+        heading: m.settings_typeset(),
         type: this.foldSettings ? "page" : "group",
         items: [
           {
-            name: m.settings_typesetting_enabled(),
-            desc: m.settings_typesetting_enabled_desc(),
-            control: { key: "typesettingEnabled", type: "toggle", defaultValue: true },
+            name: m.settings_typeset_enabled(),
+            desc: m.settings_typeset_enabled_desc(),
+            control: { key: "typesetEnabled", type: "toggle", defaultValue: true },
           },
           {
             /** 缩进 */
-            name: m.settings_typesetting_indent(),
-            desc: m.settings_typesetting_indent_desc(),
-            visible: this.plugin.settings.typesettingEnabled,
+            name: m.settings_typeset_indent(),
+            desc: m.settings_typeset_indent_desc(),
+            visible: this.plugin.settings.typesetEnabled,
             control: {
-              key: "typesettingIndent",
+              key: "typesetIndent",
               type: "slider",
               min: 0,
               max: 4,
@@ -72,11 +72,11 @@ export class CorePluginSettingTab extends PluginSettingTab {
             },
           },
           {
-            name: m.settings_typesetting_line_height(),
-            desc: m.settings_typesetting_line_height_desc(),
-            visible: this.plugin.settings.typesettingEnabled,
+            name: m.settings_typeset_line_height(),
+            desc: m.settings_typeset_line_height_desc(),
+            visible: this.plugin.settings.typesetEnabled,
             control: {
-              key: "typesettingLineHeight",
+              key: "typesetLineHeight",
               type: "slider",
               min: 1,
               max: 3,
@@ -153,18 +153,18 @@ export class CorePluginSettingTab extends PluginSettingTab {
       },
       {
         /** 字数统计分组 */
-        name: m.settings_word_count(),
-        heading: m.settings_word_count(),
+        name: m.settings_wordcount(),
+        heading: m.settings_wordcount(),
         type: this.foldSettings ? "page" : "group",
         items: [
           {
-            name: m.settings_word_count_enabled(),
-            desc: m.settings_word_count_enabled_desc(),
+            name: m.settings_wordcount_enabled(),
+            desc: m.settings_wordcount_enabled_desc(),
             control: { key: "wordCountEnabled", type: "toggle", defaultValue: true },
           },
           {
-            name: m.settings_word_count_suffix(),
-            desc: m.settings_word_count_suffix_desc(),
+            name: m.settings_wordcount_suffix(),
+            desc: m.settings_wordcount_suffix_desc(),
             control: { key: "wordCountSuffix", type: "text", defaultValue: "字" },
           },
         ],
@@ -205,25 +205,25 @@ export class CorePluginSettingTab extends PluginSettingTab {
         // 折叠设置：缓存值用于控制分组是否为 page 类型
         this.foldSettings = value;
         break;
-      case "typesettingEnabled":
+      case "typesetEnabled":
         // 切换排版 CSS class
         window.document.documentElement.toggleClass(
-          "novel-typesetting",
-          this.plugin.settings.typesettingEnabled,
+          "novel-typeset",
+          this.plugin.settings.typesetEnabled,
         );
         break;
-      case "typesettingIndent":
+      case "typesetIndent":
         // 更新段落缩进 CSS 变量
         window.document.documentElement.style.setProperty(
-          "--novel-typesetting-indent",
-          `${this.plugin.settings.typesettingIndent}rem`,
+          "--novel-typeset-indent",
+          `${this.plugin.settings.typesetIndent}rem`,
         );
         break;
-      case "typesettingLineHeight":
+      case "typesetLineHeight":
         // 更新行高 CSS 变量
         window.document.documentElement.style.setProperty(
-          "--novel-typesetting-line-height",
-          `${this.plugin.settings.typesettingLineHeight}rem`,
+          "--novel-typeset-line-height",
+          `${this.plugin.settings.typesetLineHeight}rem`,
         );
         break;
       case "gridlinesEnabled":
@@ -261,7 +261,7 @@ export class CorePluginSettingTab extends PluginSettingTab {
       case "wordCountEnabled":
         // 切换字数统计 CSS class
         window.document.documentElement.toggleClass(
-          "novel-word-count",
+          "novel-wordcount",
           this.plugin.settings.wordCountEnabled,
         );
         break;

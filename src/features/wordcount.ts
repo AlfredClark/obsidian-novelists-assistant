@@ -59,7 +59,7 @@ export async function resetWordCount(plugin: ObsidianPlugin) {
   for (let file in view.fileItems) {
     let items = view.fileItems[file];
     // 清除原有字数统计
-    items?.selfEl.querySelectorAll(".word-count").forEach((ele) => {
+    items?.selfEl.querySelectorAll(".wordcount").forEach((ele) => {
       ele.remove();
     });
     // 添加新的字数统计span
@@ -73,7 +73,7 @@ export async function resetWordCount(plugin: ObsidianPlugin) {
       const countText = plugin.settings.wordCountSuffix
         ? `${count} ${plugin.settings.wordCountSuffix}`
         : `${count}`;
-      items?.selfEl.createSpan("word-count").setText(countText);
+      items?.selfEl.createSpan("wordcount").setText(countText);
     }
   }
 }
@@ -81,7 +81,7 @@ export async function resetWordCount(plugin: ObsidianPlugin) {
 /** 初始化字数统计功能 */
 export async function initWordCount(plugin: ObsidianPlugin) {
   // 切换字数统计功能启用状态
-  window.document.documentElement.toggleClass("novel-word-count", plugin.settings.wordCountEnabled);
+  window.document.documentElement.toggleClass("novel-wordcount", plugin.settings.wordCountEnabled);
 
   // 仓库加载完成添加
   plugin.app.workspace.onLayoutReady(async () => {
@@ -100,7 +100,7 @@ export async function initWordCount(plugin: ObsidianPlugin) {
       const countText = plugin.settings.wordCountSuffix
         ? `0 ${plugin.settings.wordCountSuffix}`
         : `0`;
-      element.createSpan("word-count").setText(countText);
+      element.createSpan("wordcount").setText(countText);
     }),
   );
 
@@ -121,7 +121,7 @@ export async function initWordCount(plugin: ObsidianPlugin) {
       const countText = plugin.settings.wordCountSuffix
         ? `${count} ${plugin.settings.wordCountSuffix}`
         : `${count}`;
-      element.querySelector(".word-count")?.setText(countText);
+      element.querySelector(".wordcount")?.setText(countText);
     }),
   );
 }
@@ -132,7 +132,7 @@ export function unloadWordCount(plugin: ObsidianPlugin) {
   for (let file in view.fileItems) {
     let items = view.fileItems[file];
     // 清除原有字数统计
-    items?.selfEl.querySelectorAll(".word-count").forEach((ele) => {
+    items?.selfEl.querySelectorAll(".wordcount").forEach((ele) => {
       ele.remove();
     });
   }

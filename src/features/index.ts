@@ -1,7 +1,7 @@
 import { ObsidianPlugin } from "../core/types";
-import { initTypesetting, unloadTypesetting } from "./typesetting";
+import { initTypesetting, unloadTypesetting } from "./typeset";
 import { initGridlines, unloadGridlines } from "./gridlines";
-import { initWordCount, unloadWordCount } from "./word-count";
+import { initWordCount, unloadWordCount } from "./wordcount";
 
 /** 初始化所有功能模块 */
 export async function initFeatures(plugin: ObsidianPlugin) {

@@ -10,11 +10,11 @@ export type Settings = {
   /** 是否折叠设置页面的设置项 */
   foldSettings: boolean;
   /** 排版 */
-  typesettingEnabled: boolean;
+  typesetEnabled: boolean;
   /** 段落缩进（rem） */
-  typesettingIndent: number;
+  typesetIndent: number;
   /** 行高（rem） */
-  typesettingLineHeight: number;
+  typesetLineHeight: number;
   /** 网格线 */
   gridlinesEnabled: boolean;
   /** 网格单元格宽度（px） */
@@ -35,9 +35,9 @@ export type Settings = {
 export const DEFAULT_SETTINGS: Settings = {
   locale: "app",
   foldSettings: false,
-  typesettingEnabled: true,
-  typesettingIndent: 2,
-  typesettingLineHeight: 2,
+  typesetEnabled: true,
+  typesetIndent: 2,
+  typesetLineHeight: 2,
   gridlinesEnabled: true,
   gridlinesSize: 5,
   gridlinesRatio: 2,

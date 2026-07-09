@@ -8,18 +8,18 @@ If your plugin does not need CSS, delete this file.
 */
 :root {
   --text-muted: var(--text-muted);
-  --novel-typesetting-indent: 2rem;
-  --novel-typesetting-line-height: 2rem;
+  --novel-typeset-indent: 2rem;
+  --novel-typeset-line-height: 2rem;
   --novel-gridlines-size: 5px;
   --novel-gridlines-space: 10px;
   --novel-gridlines-thick: 1px;
   --novel-gridlines-opacity: 50%;
 }
 
-.novel-typesetting .markdown-source-view .cm-content {
+.novel-typeset .markdown-source-view .cm-content {
   position: relative;
-  text-indent: var(--novel-typesetting-indent, 2rem);
-  line-height: var(--novel-typesetting-line-height, 2rem);
+  text-indent: var(--novel-typeset-indent, 2rem);
+  line-height: var(--novel-typeset-line-height, 2rem);
 }
 
 .novel-gridlines .markdown-source-view .cm-content::before {
@@ -31,9 +31,9 @@ If your plugin does not need CSS, delete this file.
   background-image: repeating-linear-gradient(
       to bottom,
       transparent 0,
-      transparent calc(var(--novel-typesetting-line-height) - var(--novel-gridlines-thick)),
-      color-mix(in srgb, var(--text-muted) var(--novel-gridlines-opacity), transparent) calc(var(--novel-typesetting-line-height) - var(--novel-gridlines-thick)),
-      color-mix(in srgb, var(--text-muted) var(--novel-gridlines-opacity), transparent) var(--novel-typesetting-line-height)
+      transparent calc(var(--novel-typeset-line-height) - var(--novel-gridlines-thick)),
+      color-mix(in srgb, var(--text-muted) var(--novel-gridlines-opacity), transparent) calc(var(--novel-typeset-line-height) - var(--novel-gridlines-thick)),
+      color-mix(in srgb, var(--text-muted) var(--novel-gridlines-opacity), transparent) var(--novel-typeset-line-height)
   );
   mask-image: repeating-linear-gradient(
       to right,
@@ -44,11 +44,11 @@ If your plugin does not need CSS, delete this file.
   );
 }
 
-.nav-file-title .word-count {
+.nav-file-title .wordcount {
   display: none;
 }
 
-.novel-word-count .nav-file-title .word-count {
+.novel-wordcount .nav-file-title .wordcount {
   display: flex;
   margin-left: auto
 }
