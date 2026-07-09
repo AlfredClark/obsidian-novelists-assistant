@@ -25,23 +25,23 @@ export class CorePluginSettingTab extends PluginSettingTab {
         items: [
           {
             /** 语言 */
-            name: m.settings_language(),
-            desc: m.settings_language_desc(),
+            name: m.settings_general_language(),
+            desc: m.settings_general_language_desc(),
             control: {
               key: "locale",
               type: "dropdown",
               defaultValue: "app",
               options: {
-                app: m.settings_language_option_app(),
-                en: m.settings_language_option_en(),
-                zh: m.settings_language_option_zh(),
+                app: m.settings_general_language_option_app(),
+                en: m.settings_general_language_option_en(),
+                zh: m.settings_general_language_option_zh(),
               },
             },
           },
           {
             /** 折叠设置 */
-            name: m.settings_fold(),
-            desc: m.settings_fold_desc(),
+            name: m.settings_general_fold(),
+            desc: m.settings_general_fold_desc(),
             control: { key: "foldSettings", type: "toggle", defaultValue: false },
           },
         ],
@@ -59,8 +59,8 @@ export class CorePluginSettingTab extends PluginSettingTab {
           },
           {
             /** 缩进 */
-            name: m.settings_indent(),
-            desc: m.settings_indent_desc(),
+            name: m.settings_typesetting_indent(),
+            desc: m.settings_typesetting_indent_desc(),
             visible: this.plugin.settings.typesettingEnabled,
             control: {
               key: "typesettingIndent",
@@ -72,8 +72,8 @@ export class CorePluginSettingTab extends PluginSettingTab {
             },
           },
           {
-            name: m.settings_line_height(),
-            desc: m.settings_line_height_desc(),
+            name: m.settings_typesetting_line_height(),
+            desc: m.settings_typesetting_line_height_desc(),
             visible: this.plugin.settings.typesettingEnabled,
             control: {
               key: "typesettingLineHeight",
@@ -177,7 +177,7 @@ export class CorePluginSettingTab extends PluginSettingTab {
         items: [
           {
             /** 版本号 */
-            name: m.settings_version(),
+            name: m.settings_about_version(),
             render: (setting: Setting) => {
               setting.controlEl.createSpan({
                 text: this.plugin.manifest.version,
