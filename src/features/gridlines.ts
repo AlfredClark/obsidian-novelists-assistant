@@ -25,7 +25,11 @@ export async function initGridlines(plugin: ObsidianPlugin) {
   );
 }
 
-/** 卸载网格线功能：清除网格线相关的 CSS class */
+/** 卸载网格线功能：清除网格线相关的 CSS class 与变量 */
 export function unloadGridlines() {
   window.document.documentElement.removeClass("novel-gridlines");
+  window.document.documentElement.style.removeProperty("--novel-gridlines-size");
+  window.document.documentElement.style.removeProperty("--novel-gridlines-space");
+  window.document.documentElement.style.removeProperty("--novel-gridlines-thick");
+  window.document.documentElement.style.removeProperty("--novel-gridlines-opacity");
 }

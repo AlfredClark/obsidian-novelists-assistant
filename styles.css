@@ -16,13 +16,13 @@ If your plugin does not need CSS, delete this file.
   --novel-gridlines-opacity: 50%;
 }
 
-.novel-typeset .markdown-source-view .cm-content {
+.novel-typeset .markdown-source-view:not(.lore-typeset) .cm-content {
   position: relative;
   text-indent: var(--novel-typeset-indent, 2rem);
   line-height: var(--novel-typeset-line-height, 2rem);
 }
 
-.novel-gridlines .markdown-source-view .cm-content::before {
+.novel-gridlines .markdown-source-view:not(.lore-gridlines) .cm-content::before {
   content: "";
   position: absolute;
   inset: 0;

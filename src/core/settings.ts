@@ -3,16 +3,24 @@ import { ObsidianPlugin } from "./types";
 import * as m from "../i18n/paraglide/messages";
 import { setLocale, toLocale, baseLocale } from "../i18n/paraglide/runtime";
 import { resetWordCount } from "../features/wordcount";
+import { applyLoreStyles } from "../features/lore";
 
 /** 插件设置页 */
 export class CorePluginSettingTab extends PluginSettingTab {
   plugin: ObsidianPlugin;
-  foldSettings: unknown;
 
   constructor(plugin: ObsidianPlugin) {
     super(plugin.app, plugin);
     this.plugin = plugin;
-    this.foldSettings = plugin.settings.foldSettings;
+  }
+
+  /** 获得设定库需要使用的dropdown数据 */
+  getLorePaths(): Record<string, string> {
+    let paths: Record<string, string> = { "": m.settings_lore_path_none() };
+    this.plugin.app.vault.getAllFolders().forEach((folder) => {
+      paths[folder.path] = folder.path;
+    });
+    return paths;
   }
 
   /** 返回声明式设置定义，Obsidian 自动渲染 */
@@ -50,7 +58,7 @@ export class CorePluginSettingTab extends PluginSettingTab {
         /** 排版分组 */
         name: m.settings_typeset(),
         heading: m.settings_typeset(),
-        type: this.foldSettings ? "page" : "group",
+        type: this.plugin.settings.foldSettings ? "page" : "group",
         items: [
           {
             name: m.settings_typeset_enabled(),
@@ -90,7 +98,7 @@ export class CorePluginSettingTab extends PluginSettingTab {
         /** 网格线分组 */
         name: m.settings_gridlines(),
         heading: m.settings_gridlines(),
-        type: this.foldSettings ? "page" : "group",
+        type: this.plugin.settings.foldSettings ? "page" : "group",
         items: [
           {
             name: m.settings_gridlines_enabled(),
@@ -152,10 +160,46 @@ export class CorePluginSettingTab extends PluginSettingTab {
         ],
       },
       {
+        /** 设定库分组 */
+        name: m.settings_lore(),
+        heading: m.settings_lore(),
+        type: this.plugin.settings.foldSettings ? "page" : "group",
+        items: [
+          {
+            name: m.settings_lore_path(),
+            desc: m.settings_lore_path_desc(),
+            control: {
+              key: "lorePath",
+              type: "dropdown",
+              options: this.getLorePaths(),
+              defaultValue: "",
+            },
+          },
+          {
+            name: m.settings_lore_quick_create(),
+            desc: m.settings_lore_quick_create_desc(),
+            visible: this.plugin.settings.lorePath !== "",
+            control: { key: "loreQuickCreateEnabled", type: "toggle", defaultValue: true },
+          },
+          {
+            name: m.settings_lore_styles_disabled(),
+            desc: m.settings_lore_styles_disabled_desc(),
+            visible: this.plugin.settings.lorePath !== "",
+            control: { key: "loreStylesDisabled", type: "toggle", defaultValue: true },
+          },
+          {
+            name: m.settings_lore_suggest_prefix(),
+            desc: m.settings_lore_suggest_prefix_desc(),
+            visible: this.plugin.settings.lorePath !== "",
+            control: { key: "loreSuggestPrefix", type: "text", defaultValue: "//" },
+          },
+        ],
+      },
+      {
         /** 字数统计分组 */
         name: m.settings_wordcount(),
         heading: m.settings_wordcount(),
-        type: this.foldSettings ? "page" : "group",
+        type: this.plugin.settings.foldSettings ? "page" : "group",
         items: [
           {
             name: m.settings_wordcount_enabled(),
@@ -173,7 +217,7 @@ export class CorePluginSettingTab extends PluginSettingTab {
         /** 关于页面 */
         name: m.settings_about(),
         heading: m.settings_about(),
-        type: this.foldSettings ? "page" : "group",
+        type: this.plugin.settings.foldSettings ? "page" : "group",
         items: [
           {
             /** 版本号 */
@@ -202,8 +246,6 @@ export class CorePluginSettingTab extends PluginSettingTab {
         }
         break;
       case "foldSettings":
-        // 折叠设置：缓存值用于控制分组是否为 page 类型
-        this.foldSettings = value;
         break;
       case "typesetEnabled":
         // 切换排版 CSS class
@@ -258,6 +300,23 @@ export class CorePluginSettingTab extends PluginSettingTab {
           `${this.plugin.settings.gridlinesThick}px`,
         );
         break;
+      case "gridlinesOpacity":
+        // 更新网格线不透明度 CSS 变量
+        window.document.documentElement.style.setProperty(
+          "--novel-gridlines-opacity",
+          `${this.plugin.settings.gridlinesOpacity}%`,
+        );
+        break;
+      case "lorePath":
+        applyLoreStyles(this.plugin, this.plugin.app.workspace.getLeaf());
+        break;
+      case "loreQuickCreateEnabled":
+        break;
+      case "loreStylesDisabled":
+        applyLoreStyles(this.plugin, this.plugin.app.workspace.getLeaf());
+        break;
+      case "loreSuggestPrefix":
+        break;
       case "wordCountEnabled":
         // 切换字数统计 CSS class
         window.document.documentElement.toggleClass(
@@ -269,14 +328,6 @@ export class CorePluginSettingTab extends PluginSettingTab {
         // 重置字数统计功能
         await resetWordCount(this.plugin);
         break;
-      case "gridlinesOpacity":
-        // 更新网格线不透明度 CSS 变量
-        window.document.documentElement.style.setProperty(
-          "--novel-gridlines-opacity",
-          `${this.plugin.settings.gridlinesOpacity}%`,
-        );
-        break;
-
       default:
         break;
     }

@@ -17,7 +17,9 @@ export async function initTypesetting(plugin: ObsidianPlugin) {
   );
 }
 
-/** 卸载排版功能：清除排版相关的 CSS class */
+/** 卸载排版功能：清除排版相关的 CSS class 与变量 */
 export function unloadTypesetting() {
   window.document.documentElement.removeClass("novel-typeset");
+  window.document.documentElement.style.removeProperty("--novel-typeset-indent");
+  window.document.documentElement.style.removeProperty("--novel-typeset-line-height");
 }

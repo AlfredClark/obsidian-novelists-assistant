@@ -25,6 +25,14 @@ export type Settings = {
   gridlinesThick: number;
   /** 网格线不透明度（%） */
   gridlinesOpacity: number;
+  /** 设定库路径 */
+  lorePath: string;
+  /** 快速创建设定功能开启 */
+  loreQuickCreateEnabled: boolean;
+  /** 禁用设定库中的样式 */
+  loreStylesDisabled: boolean;
+  /** 设定建议触发前缀 */
+  loreSuggestPrefix: string;
   /** 字数统计 */
   wordCountEnabled: boolean;
   /** 字数后缀 */
@@ -43,6 +51,10 @@ export const DEFAULT_SETTINGS: Settings = {
   gridlinesRatio: 2,
   gridlinesThick: 1,
   gridlinesOpacity: 75,
+  lorePath: "",
+  loreQuickCreateEnabled: true,
+  loreStylesDisabled: true,
+  loreSuggestPrefix: "//",
   wordCountEnabled: true,
   wordCountSuffix: "字",
 };

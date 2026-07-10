@@ -26,7 +26,8 @@ interface FileExplorerView extends View {
 
 /** 获取文件管理器视图实例 */
 function getFileExplorerView(plugin: ObsidianPlugin) {
-  return plugin.app.workspace.getLeavesOfType("file-explorer").last()?.view as FileExplorerView;
+  const leaves = plugin.app.workspace.getLeavesOfType("file-explorer");
+  return leaves[leaves.length - 1]?.view as FileExplorerView;
 }
 
 /**
@@ -136,4 +137,5 @@ export function unloadWordCount(plugin: ObsidianPlugin) {
       ele.remove();
     });
   }
+  window.document.documentElement.removeClass("novel-wordcount");
 }
