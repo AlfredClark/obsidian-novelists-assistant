@@ -64,7 +64,7 @@ export async function resetWordCount(plugin: ObsidianPlugin) {
       ele.remove();
     });
     // 添加新的字数统计span
-    if (items?.file.extension) {
+    if (items?.file.extension && items?.file.extension === "md") {
       let file = plugin.app.vault.getFileByPath(items.file.path);
       let content = "";
       if (file) {
