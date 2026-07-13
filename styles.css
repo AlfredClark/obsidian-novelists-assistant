@@ -14,6 +14,9 @@ If your plugin does not need CSS, delete this file.
   --novel-gridlines-space: 10px;
   --novel-gridlines-thick: 1px;
   --novel-gridlines-opacity: 50%;
+  --novel-preview-indent: 2rem;
+  --novel-preview-line-height: 1.5rem;
+  --novel-preview-spacing: 1rem;
 }
 
 .novel-typeset .markdown-source-view:not(.lore-typeset) .cm-content {
@@ -42,6 +45,14 @@ If your plugin does not need CSS, delete this file.
       transparent var(--novel-gridlines-size),
       transparent var(--novel-gridlines-space)
   );
+}
+
+.novel-preview .markdown-preview-view .el-p p {
+  position: relative;
+  text-indent: var(--novel-preview-indent, 2rem);
+  line-height: var(--novel-preview-line-height, 1.5rem);
+  margin-top: calc(var(--novel-preview-spacing, 1rem) / 2);
+  margin-bottom: calc(var(--novel-preview-spacing, 1rem) / 2);
 }
 
 .nav-file-title .wordcount {

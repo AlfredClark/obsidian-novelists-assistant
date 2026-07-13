@@ -36,6 +36,9 @@ export default defineConfig(
   {
     rules: {
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "no-unsanitized/property": "off",
+      "no-unsanitized/method": "off",
+      "@microsoft/sdl/no-inner-html": "off",
     },
   },
 

@@ -214,6 +214,64 @@ export class CorePluginSettingTab extends PluginSettingTab {
         ],
       },
       {
+        /** 预览排版分组 */
+        name: m.settings_preview(),
+        heading: m.settings_preview(),
+        type: this.plugin.settings.foldSettings ? "page" : "group",
+        items: [
+          {
+            name: m.settings_preview_enabled(),
+            desc: m.settings_preview_enabled_desc(),
+            control: { key: "previewEnabled", type: "toggle", defaultValue: false },
+          },
+          {
+            name: m.settings_preview_indent(),
+            desc: m.settings_preview_indent_desc(),
+            visible: this.plugin.settings.previewEnabled,
+            control: {
+              key: "previewIndent",
+              type: "slider",
+              min: 0,
+              max: 4,
+              step: 1,
+              defaultValue: 2,
+            },
+          },
+          {
+            name: m.settings_preview_line_height(),
+            desc: m.settings_preview_line_height_desc(),
+            visible: this.plugin.settings.previewEnabled,
+            control: {
+              key: "previewLineHeight",
+              type: "slider",
+              min: 1,
+              max: 3,
+              step: 0.25,
+              defaultValue: 1.5,
+            },
+          },
+          {
+            name: m.settings_preview_spacing(),
+            desc: m.settings_preview_spacing_desc(),
+            visible: this.plugin.settings.previewEnabled,
+            control: {
+              key: "previewSpacing",
+              type: "slider",
+              min: 0,
+              max: 4,
+              step: 0.25,
+              defaultValue: 1,
+            },
+          },
+          {
+            name: m.settings_preview_links_enabled(),
+            desc: m.settings_preview_links_enabled_desc(),
+            visible: this.plugin.settings.previewEnabled,
+            control: { key: "previewLinksEnabled", type: "toggle", defaultValue: true },
+          },
+        ],
+      },
+      {
         /** 关于页面 */
         name: m.settings_about(),
         heading: m.settings_about(),
@@ -327,6 +385,36 @@ export class CorePluginSettingTab extends PluginSettingTab {
       case "wordCountSuffix":
         // 重置字数统计功能
         await resetWordCount(this.plugin);
+        break;
+      case "previewEnabled":
+        // 切换预览排版 CSS class
+        window.document.documentElement.toggleClass(
+          "novel-preview",
+          this.plugin.settings.previewEnabled,
+        );
+        break;
+      case "previewIndent":
+        // 更新预览缩进 CSS 变量
+        window.document.documentElement.style.setProperty(
+          "--novel-preview-indent",
+          `${this.plugin.settings.previewIndent}rem`,
+        );
+        break;
+      case "previewLineHeight":
+        // 更新预览行高 CSS 变量
+        window.document.documentElement.style.setProperty(
+          "--novel-preview-line-height",
+          `${this.plugin.settings.previewLineHeight}rem`,
+        );
+        break;
+      case "previewSpacing":
+        // 更新预览段落间距 CSS 变量
+        window.document.documentElement.style.setProperty(
+          "--novel-preview-spacing",
+          `${this.plugin.settings.previewSpacing}rem`,
+        );
+        break;
+      case "previewLinksEnabled":
         break;
       default:
         break;

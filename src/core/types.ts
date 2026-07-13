@@ -37,6 +37,16 @@ export type Settings = {
   wordCountEnabled: boolean;
   /** 字数后缀 */
   wordCountSuffix: string;
+  /** 预览排版 */
+  previewEnabled: boolean;
+  /** 预览段落缩进（rem） */
+  previewIndent: number;
+  /** 预览行高（rem） */
+  previewLineHeight: number;
+  /** 预览段落间距（rem） */
+  previewSpacing: number;
+  /** 预览模式下是否显示链接 */
+  previewLinksEnabled: boolean;
 };
 
 /** 默认配置 */
@@ -57,6 +67,11 @@ export const DEFAULT_SETTINGS: Settings = {
   loreSuggestPrefix: "//",
   wordCountEnabled: true,
   wordCountSuffix: "字",
+  previewEnabled: false,
+  previewIndent: 2,
+  previewLineHeight: 1.5,
+  previewSpacing: 1,
+  previewLinksEnabled: true,
 };
 
 /** 插件基类，持有类型化的 settings 属性 */
