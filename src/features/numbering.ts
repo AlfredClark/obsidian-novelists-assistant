@@ -24,7 +24,7 @@ function buildChapterRegex(format: string, type: string): RegExp {
       // 匹配阿拉伯数字
       numPattern = "\\d+";
   }
-  const regexStr = escaped.replace(placeholder, `(${numPattern})`);
+  const regexStr = `^${escaped.replace(placeholder, `(${numPattern})`)}`;
   return new RegExp(regexStr);
 }
 
@@ -95,30 +95,24 @@ export async function initNumbering(plugin: ObsidianPlugin) {
       if (!targetFolder) return;
 
       menu.addItem((item) => {
-        menu.addSeparator();
         item
           .setTitle(m.numbering_create_chapter())
           .setIcon("plus")
           .onClick(async () => {
             const { numberingFormat, numberingType, numberingFill } = plugin.settings;
             // 扫描已有章节获取最大编号
-            const maxNum = await findMaxChapterNumber(
-              targetFolder!,
-              numberingFormat,
-              numberingType,
-            );
+            const maxNum = await findMaxChapterNumber(targetFolder, numberingFormat, numberingType);
             // 生成下一编号
             const nextNum = maxNum + 1;
             const numStr = formatChapterNumber(nextNum, numberingType, numberingFill);
             const filename = buildChapterFilename(numberingFormat, numStr);
-            const filePath = `${targetFolder!.path}/${filename}`;
+            const filePath = `${targetFolder.path}/${filename}`;
 
             // 文件已存在则跳过
             if (plugin.app.vault.getAbstractFileByPath(filePath)) return;
 
-            // 创建新文件，写入章节标题
-            const title = filename.slice(0, -3);
-            await plugin.app.vault.create(filePath, `# ${title}\n`);
+            // 创建新文件
+            await plugin.app.vault.create(filePath, "");
           });
       });
     }),
