@@ -47,7 +47,7 @@ If your plugin does not need CSS, delete this file.
   );
 }
 
-.novel-preview .markdown-preview-view .el-p p {
+.novel-preview .markdown-preview-view .el-p:not(.un-preview) p {
   position: relative;
   text-indent: var(--novel-preview-indent, 2rem);
   line-height: var(--novel-preview-line-height, 1.5rem);

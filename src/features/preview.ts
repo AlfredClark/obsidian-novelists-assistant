@@ -7,6 +7,7 @@ const parser = new DOMParser();
 /** 初始化预览排版功能：设置 CSS 变量，注册 Markdown 后处理器 */
 export async function initPreview(plugin: ObsidianPlugin) {
   const { previewIndent, previewLineHeight, previewSpacing } = plugin.settings;
+  window.document.documentElement.toggleClass("novel-preview", plugin.settings.previewEnabled);
   // 设置段落缩进
   window.document.documentElement.style.setProperty(
     "--novel-preview-indent",
@@ -26,12 +27,11 @@ export async function initPreview(plugin: ObsidianPlugin) {
   plugin.registerMarkdownPostProcessor((el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
     // 跳过设定库中的文件
     if (plugin.settings.lorePath && ctx.sourcePath.startsWith(plugin.settings.lorePath)) {
-      window.document.documentElement.toggleClass("novel-preview", false);
+      el.toggleClass("un-preview", true);
       return;
     }
     // 预览未启用时不处理
     if (!plugin.settings.previewEnabled) return;
-    window.document.documentElement.toggleClass("novel-preview", true);
 
     const ps = el.getElementsByTagName("p");
     const paragraphs: string[] = [];
