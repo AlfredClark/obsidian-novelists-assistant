@@ -214,6 +214,45 @@ export class CorePluginSettingTab extends PluginSettingTab {
         ],
       },
       {
+        /** 编号分组 */
+        name: m.settings_numbering(),
+        heading: m.settings_numbering(),
+        type: this.plugin.settings.foldSettings ? "page" : "group",
+        items: [
+          {
+            name: m.settings_numbering_format(),
+            desc: m.settings_numbering_format_desc(),
+            control: { key: "numberingFormat", type: "text", defaultValue: "第{}章" },
+          },
+          {
+            name: m.settings_numbering_type(),
+            desc: m.settings_numbering_type_desc(),
+            control: {
+              key: "numberingType",
+              type: "dropdown",
+              defaultValue: "number",
+              options: {
+                number: m.settings_numbering_type_number(),
+                cns: m.settings_numbering_type_cns(),
+                cnb: m.settings_numbering_type_cnb(),
+              },
+            },
+          },
+          {
+            name: m.settings_numbering_fill(),
+            desc: m.settings_numbering_fill_desc(),
+            control: {
+              key: "numberingFill",
+              type: "slider",
+              min: 0,
+              max: 5,
+              step: 1,
+              defaultValue: 0,
+            },
+          },
+        ],
+      },
+      {
         /** 预览排版分组 */
         name: m.settings_preview(),
         heading: m.settings_preview(),
@@ -415,6 +454,12 @@ export class CorePluginSettingTab extends PluginSettingTab {
         );
         break;
       case "previewLinksEnabled":
+        break;
+      case "numberingFormat":
+        break;
+      case "numberingType":
+        break;
+      case "numberingFill":
         break;
       default:
         break;

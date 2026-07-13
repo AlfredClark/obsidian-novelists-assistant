@@ -47,6 +47,12 @@ export type Settings = {
   previewSpacing: number;
   /** 预览模式下是否显示链接 */
   previewLinksEnabled: boolean;
+  /** 编号格式，如"第{}章" */
+  numberingFormat: string;
+  /** 编号类型：number / roman / circle */
+  numberingType: string;
+  /** 填充位数（编号为数字时补前导零到指定位数） */
+  numberingFill: number;
 };
 
 /** 默认配置 */
@@ -72,6 +78,9 @@ export const DEFAULT_SETTINGS: Settings = {
   previewLineHeight: 1.5,
   previewSpacing: 1,
   previewLinksEnabled: true,
+  numberingFormat: "第{}章",
+  numberingType: "number",
+  numberingFill: 0,
 };
 
 /** 插件基类，持有类型化的 settings 属性 */
