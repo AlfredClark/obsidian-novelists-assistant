@@ -1,6 +1,7 @@
-import { PluginSettingTab } from "obsidian";
-import type { SettingDefinitionItem } from "obsidian";
+import { Notice, PluginSettingTab } from "obsidian";
+import type { SettingDefinitionItem, SettingGroupItem } from "obsidian";
 import type { NovelistsAssistantSettings } from "./types";
+import { createDefaultStructure, getDefaultDirectories } from "../../features/structure";
 import { t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
 
@@ -8,6 +9,8 @@ import type NovelistsAssistantPlugin from "../../main";
 export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   collapsible: false,
   language: "system",
+  loreDir: "",
+  novelDir: "",
 };
 
 /**
@@ -37,6 +40,9 @@ export async function loadSettings(plugin: NovelistsAssistantPlugin): Promise<No
  */
 export class SettingsTab extends PluginSettingTab {
   plugin: NovelistsAssistantPlugin;
+
+  // 创建过程进行中标记：防止连点并发创建导致 createFolder 竞态误报失败
+  private creating = false;
 
   constructor(plugin: NovelistsAssistantPlugin) {
     super(plugin.app, plugin);
@@ -76,7 +82,89 @@ export class SettingsTab extends PluginSettingTab {
           },
         ],
       },
+      // 开启折叠行为时目录设置收进可导航子页，否则内联展开
+      ...(this.plugin.settings.collapsible
+        ? [
+            {
+              type: "page" as const,
+              name: t("settings.directory"),
+              desc: t("settings.directoryDesc"),
+              items: this.getDirectoryItems(),
+            },
+          ]
+        : [
+            {
+              type: "group" as const,
+              name: t("settings.directory"),
+              heading: t("settings.directory"),
+              items: this.getDirectoryItems(),
+            },
+          ]),
     ];
+  }
+
+  /**
+   * 目录设置条目：两个目录选择控件与一键创建入口。
+   * group 与 page 两种容器共用，仅容器形态由 collapsible 决定。
+   */
+  private getDirectoryItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
+    const [lore, novel] = getDefaultDirectories();
+    return [
+      {
+        name: t("settings.loreDir"),
+        desc: t("settings.loreDirDesc"),
+        control: {
+          type: "folder",
+          key: "loreDir",
+          defaultValue: "",
+          placeholder: t("settings.directoryPlaceholder"),
+        },
+      },
+      {
+        name: t("settings.novelDir"),
+        desc: t("settings.novelDirDesc"),
+        control: {
+          type: "folder",
+          key: "novelDir",
+          defaultValue: "",
+          placeholder: t("settings.directoryPlaceholder"),
+        },
+      },
+      {
+        name: t("settings.createStructure"),
+        desc: t("settings.createStructureDesc", {
+          lore: lore?.name ?? "",
+          novel: novel?.name ?? "",
+        }),
+        action: () => {
+          void this.handleCreateStructure();
+        },
+      },
+    ];
+  }
+
+  /**
+   * 一键创建默认目录结构并按结果反馈；完成后重渲染使目录控件显示新指向。
+   * 失败提示保留更长时间以便阅读，成功提示即时消失。
+   */
+  private async handleCreateStructure(): Promise<void> {
+    if (this.creating) return;
+    this.creating = true;
+    try {
+      const result = await createDefaultStructure(this.plugin);
+      if (result.created.length > 0) {
+        new Notice(t("structure.created", { dirs: result.created.join(", ") }));
+      }
+      if (result.failed.length > 0) {
+        new Notice(t("structure.failed", { dirs: result.failed.join(", ") }), 5000);
+      }
+      if (result.created.length === 0 && result.failed.length === 0) {
+        new Notice(t("structure.noChange"));
+      }
+      this.update();
+    } finally {
+      this.creating = false;
+    }
   }
 
   setControlValue(key: string, value: unknown) {

@@ -2,7 +2,7 @@
 
 ## 项目概览
 
-- Obsidian 社区插件模板：TypeScript → esbuild → `main.js`
+- Obsidian 小说助手插件：TypeScript → esbuild → `main.js`
 - 发布产物：`main.js` / `manifest.json` / `styles.css`（位于根目录，GitHub Release 使用）
 - 插件 ID：`novelists-assistant`；许可证：GPL-3.0-only
 
@@ -40,7 +40,8 @@
 │   │   ├── i18n/            # 国际化模块：手动实现的多语言支持
 │   │   │   └── locales/     # 语言资源目录（文件说明见核心能力）
 │   │   └── settings/        # 设置模块：持久化设置 + 声明式设置页
-│   ├── features/            # 业务功能：用户可感知的具体功能（暂无模块）
+│   ├── features/            # 业务功能：用户可感知的具体功能
+│   │   └── structure/       # 目录结构：默认目录创建与自动指向（说明见业务功能）
 │   ├── utils/               # 无状态纯函数工具（如 svelte 组件挂载，说明见核心能力）
 │   └── main.ts              # 插件入口：仅调用 initCores()/initFeatures() 聚合初始化
 ├── .editorconfig            # 编辑器统一格式（与 .prettierrc 对齐）
@@ -89,12 +90,24 @@
 - `ambient.d.ts`：`*.svelte` 模块声明，tsc 层放宽 props 类型，精确类型由 svelte-check 校验（build 命令内执行）；不与 `svelte.ts` 同名——TS 对同名 .ts/.d.ts 只保留 .ts，且模块文件内 `declare module` 会被视为模块增强而非法
 - `.svelte` 组件文件属于模块特有文件，置于所属模块目录下（如 `features/<模块>/components/`），不受三段式约束
 
+## 业务功能
+
+`src/features/` 下用户可感知的业务功能模块专项说明。
+
+### structure（目录结构）
+
+- 三段式组织；依赖方向：settings 值导入本模块（设置页一键创建入口），本模块值导入 i18n、仅 type-only 导入 main/settings，无运行时循环
+- `DirectoryRole`（"lore" | "novel"）与设置字段（`loreDir`/`novelDir`）经 `SETTING_KEYS` 一一对应
+- `getDefaultDirectories()` 按当前界面语言生成默认目录名（en: Lore/Novel，zh: 设定/正文，zh-TW: 設定/正文）；仅在创建时取值并持久化，切换语言不影响已建目录
+- `createDefaultStructure(plugin)`：设置页一键创建——已有有效指向的角色不动，其余按默认名补齐（已存在跳过创建、同名文件占用归入 failed）并写入设置，返回 `CreateStructureResult` 由调用方反馈
+- `initStructure(plugin)`：启动时探测默认目录，已存在且设置未指向则自动补齐并持久化，缺失时静默不打扰
+
 ## 代码规范
 
 1. **命名**：类/接口 PascalCase，函数/变量 camelCase，常量 UPPER_SNAKE_CASE，文件 kebab-case
 2. **类型**：strict 全开（含 `noUncheckedIndexedAccess`）；禁止 `any` 与隐式 any
 3. **模块**：`cores/`（核心能力）与 `features/`（业务功能）下的每个模块均按三段式组织：`index.ts`（统一出口，仅 re-export）、`types.ts`（类型定义）、`core.ts`（核心逻辑，导出 `init<模块>()` 初始化方法）；各模块 init 方法由 `src/cores/index.ts`/`src/features/index.ts` 分别聚合为 `initCores()`/`initFeatures()`，main.ts 各调用一次；init 方法参数一律使用具体类 `NovelistsAssistantPlugin`，且导入一律为 `import type`（类型层循环在编译期擦除，运行时无循环）；模块特有文件（如 i18n 的 `locales/`）直接置于模块目录下，不受三段式约束
-4. **注释**：中文，写"为什么"而非"是什么"；不做多余注释。导出声明（类/接口/函数/常量/属性）一律使用 JSDoc（`/** */`），内部逻辑用行注释；`@param`/`@returns` 仅在参数或返回值存在需要说明的语义时使用，不机械全量添加；纯 re-export 的 index.ts 无需注释
+4. **注释**：中文，写"为什么"而非"是什么"；不做多余注释。导出声明（类/接口/函数/常量/属性）一律使用 JSDoc（`/** */`），内部逻辑用行注释；types.ts 中属性注释置于属性后方（行注释），需分组时以独立一行的 `/** */` 组注释标注；`@param`/`@returns` 仅在参数或返回值存在需要说明的语义时使用，不机械全量添加；纯 re-export 的 index.ts 无需注释
 5. **约束**：禁止 `import node:*` 与 Electron API（`obsidianmd/no-nodejs-modules` 规则）
 6. **依赖**：确认可 bundle 或需加入 esbuild `external` 列表
 7. **格式**：由 `.prettierrc` 统一控制——2 空格缩进、双引号、128 列、LF 行尾（与 `.editorconfig` 一致）

@@ -5,8 +5,10 @@ import type { PluginLanguage } from "../i18n";
  * 新增字段须同步在 DEFAULT_SETTINGS 补默认值。
  */
 export interface NovelistsAssistantSettings {
-  /** 是否启用折叠行为 */
-  collapsible: boolean;
-  /** 插件界面语言 */
-  language: PluginLanguage;
+  /** 通用设置 */
+  collapsible: boolean; // 是否启用折叠行为
+  language: PluginLanguage; // 插件界面语言
+  /** 目录结构 */
+  loreDir: string; // 设定目录路径，空字符串表示未配置
+  novelDir: string; // 正文目录路径，空字符串表示未配置
 }

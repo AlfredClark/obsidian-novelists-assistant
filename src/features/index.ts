@@ -1,3 +1,4 @@
+import { initStructure } from "./structure";
 import type NovelistsAssistantPlugin from "../main";
 
 /** 各 feature 注册的清理函数，cleanFeatures 在卸载时依序回收 */
@@ -9,8 +10,7 @@ const cleanups: Array<() => void> = [];
  * @param plugin 插件实例；type-only 导入具体类，运行时无循环
  */
 export async function initFeatures(plugin: NovelistsAssistantPlugin): Promise<void> {
-  // 首个 feature 落地后在此处依序调用各模块的 init 方法
-  void plugin;
+  await initStructure(plugin);
 }
 
 /** 卸载时依序回收各 feature 注册的资源（视图叶子等） */

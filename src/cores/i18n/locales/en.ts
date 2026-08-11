@@ -3,6 +3,11 @@ const en = {
   settings: {
     collapsible: "Collapsible groups",
     collapsibleDesc: "Allow settings groups to be collapsed",
+    createStructure: "Create default directory structure",
+    createStructureDesc: "Create {lore} and {novel} folders at the vault root and point the settings above to them",
+    directory: "Directories",
+    directoryDesc: "Configure folders for novel lore notes and main text",
+    directoryPlaceholder: "Not selected",
     general: "General",
     language: "Plugin language",
     languageDesc: "Set the plugin interface language",
@@ -12,6 +17,17 @@ const en = {
       zh: "简体中文",
       "zh-TW": "繁體中文",
     },
+    loreDir: "Lore folder",
+    loreDirDesc: "Folder for novel lore notes",
+    novelDir: "Novel folder",
+    novelDirDesc: "Folder for the novel's main text",
+  },
+  structure: {
+    created: "Created folders: {dirs}",
+    defaultLore: "Lore",
+    defaultNovel: "Novel",
+    failed: "Failed to create folders: {dirs}",
+    noChange: "Default directory structure already in place",
   },
 } as const;
 
