@@ -2,8 +2,15 @@ import { Notice, PluginSettingTab } from "obsidian";
 import type { SettingDefinitionItem, SettingGroupItem } from "obsidian";
 import type { NovelistsAssistantSettings } from "./types";
 import { createDefaultStructure, getDefaultDirectories } from "../../features/structure";
+import { refreshTypesetting } from "../../features/typesetting";
 import { t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
+
+/** 影响排版效果的设置键，变更时须刷新排版类 */
+const TYPESETTING_SETTING_KEYS: readonly string[] = ["novelDir", "novelTypesetting", "novelIndent"];
+
+/** 需要重渲染设置页的设置键：仅文案联动与分组结构变化；其余控件自带显示，避免滑块拖动触发全页重建 */
+const UPDATE_SETTING_KEYS: readonly string[] = ["language", "collapsible"];
 
 /** 设置默认值。data.json 缺失字段时（如旧版本升级）以此为兜底合并 */
 export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
@@ -11,6 +18,8 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   language: "system",
   loreDir: "",
   novelDir: "",
+  novelIndent: 2,
+  novelTypesetting: true,
 };
 
 /**
@@ -82,25 +91,24 @@ export class SettingsTab extends PluginSettingTab {
           },
         ],
       },
-      // 开启折叠行为时目录设置收进可导航子页，否则内联展开
-      ...(this.plugin.settings.collapsible
-        ? [
-            {
-              type: "page" as const,
-              name: t("settings.directory"),
-              desc: t("settings.directoryDesc"),
-              items: this.getDirectoryItems(),
-            },
-          ]
-        : [
-            {
-              type: "group" as const,
-              name: t("settings.directory"),
-              heading: t("settings.directory"),
-              items: this.getDirectoryItems(),
-            },
-          ]),
+      // 可折叠分组：collapsible 开启时收进可导航子页，否则内联展开
+      this.buildCollapsibleSection(t("settings.directory"), t("settings.directoryDesc"), this.getDirectoryItems()),
+      this.buildCollapsibleSection(t("settings.typesetting"), t("settings.typesettingDesc"), this.getTypesettingItems()),
     ];
+  }
+
+  /**
+   * 可折叠分组：collapsible 开启时渲染为可导航子页（page），否则内联展开（group）。
+   * 两种容器共用条目，仅容器形态由 collapsible 决定。
+   */
+  private buildCollapsibleSection<K extends string>(
+    name: string,
+    desc: string | undefined,
+    items: SettingGroupItem<K>[],
+  ): SettingDefinitionItem<K> {
+    return this.plugin.settings.collapsible
+      ? { type: "page", name, desc, items }
+      : { type: "group", name, heading: name, items };
   }
 
   /**
@@ -144,6 +152,37 @@ export class SettingsTab extends PluginSettingTab {
   }
 
   /**
+   * 排版设置条目：正文排版开关与首行缩进大小。
+   * 与其他可折叠分组共用条目结构，容器形态由 collapsible 决定。
+   */
+  private getTypesettingItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
+    return [
+      {
+        name: t("settings.novelTypesetting"),
+        desc: t("settings.novelTypesettingDesc"),
+        control: {
+          type: "toggle",
+          key: "novelTypesetting",
+          defaultValue: true,
+        },
+      },
+      {
+        name: t("settings.novelIndent"),
+        desc: t("settings.novelIndentDesc"),
+        control: {
+          type: "slider",
+          key: "novelIndent",
+          defaultValue: 2,
+          min: 0,
+          max: 4,
+          step: 1,
+          displayFormat: (value) => `${value}rem`,
+        },
+      },
+    ];
+  }
+
+  /**
    * 一键创建默认目录结构并按结果反馈；完成后重渲染使目录控件显示新指向。
    * 失败提示保留更长时间以便阅读，成功提示即时消失。
    */
@@ -162,6 +201,7 @@ export class SettingsTab extends PluginSettingTab {
         new Notice(t("structure.noChange"));
       }
       this.update();
+      refreshTypesetting(this.plugin);
     } finally {
       this.creating = false;
     }
@@ -169,6 +209,13 @@ export class SettingsTab extends PluginSettingTab {
 
   setControlValue(key: string, value: unknown) {
     void super.setControlValue(key, value);
-    void this.update();
+    // 仅文案联动与分组结构变化的键需要重渲染，其余控件自带显示（滑块拖动不重建页面）
+    if (UPDATE_SETTING_KEYS.includes(key)) {
+      void this.update();
+    }
+    // 仅排版相关设置变更时刷新排版类，避免语言/折叠等无关设置触发无谓的 DOM 遍历
+    if (TYPESETTING_SETTING_KEYS.includes(key)) {
+      refreshTypesetting(this.plugin);
+    }
   }
 }

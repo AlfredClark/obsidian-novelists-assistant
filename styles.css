@@ -1,8 +1,7 @@
-/*
+:root {
+  --novelists-indent: 2rem;
+}
 
-此 CSS 文件将随插件一起打包，
-插件启用后在应用内生效。
-
-如果插件不需要 CSS，请删除此文件。
-
-*/
+[data-mode="source"] .cm-content.novelists-typesetting {
+  text-indent: var(--novelists-indent, 2rem);
+}

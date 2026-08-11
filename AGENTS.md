@@ -41,7 +41,8 @@
 │   │   │   └── locales/     # 语言资源目录（文件说明见核心能力）
 │   │   └── settings/        # 设置模块：持久化设置 + 声明式设置页
 │   ├── features/            # 业务功能：用户可感知的具体功能
-│   │   └── structure/       # 目录结构：默认目录创建与自动指向（说明见业务功能）
+│   │   ├── structure/       # 目录结构：默认目录创建与自动指向（说明见业务功能）
+│   │   └── typesetting/     # 排版：正文目录排版样式（说明见业务功能）
 │   ├── utils/               # 无状态纯函数工具（如 svelte 组件挂载，说明见核心能力）
 │   └── main.ts              # 插件入口：仅调用 initCores()/initFeatures() 聚合初始化
 ├── .editorconfig            # 编辑器统一格式（与 .prettierrc 对齐）
@@ -101,6 +102,14 @@
 - `getDefaultDirectories()` 按当前界面语言生成默认目录名（en: Lore/Novel，zh: 设定/正文，zh-TW: 設定/正文）；仅在创建时取值并持久化，切换语言不影响已建目录
 - `createDefaultStructure(plugin)`：设置页一键创建——已有有效指向的角色不动，其余按默认名补齐（已存在跳过创建、同名文件占用归入 failed）并写入设置，返回 `CreateStructureResult` 由调用方反馈
 - `initStructure(plugin)`：启动时探测默认目录，已存在且设置未指向则自动补齐并持久化，缺失时静默不打扰
+
+### typesetting（排版）
+
+- 三段式组织；core.ts 导出 `initTypesetting(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`layout-change`/`active-leaf-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
+- `TYPESETTING_CLASS`/`TYPESETTING_VAR` 常量位于 types.ts；样式表以 `[data-mode="source"] .cm-content.novelists-typesetting` + `var(--novelists-indent, 2rem)` 消费（CSS 兜底默认 2rem）
+- 依赖方向：settings 值导入 `refreshTypesetting` 与两个门控键数组（`TYPESETTING_SETTING_KEYS` 刷新排版类 / `UPDATE_SETTING_KEYS` 重渲染设置页），本模块仅 type-only 导入 main，无运行时循环
+- `refreshTypesetting(plugin)`：经 `iterateAllLeaves` 遍历全部窗口叶子，按 `novelDir` 前缀 + `novelTypesetting` 开关增删类与缩进变量；`CSS.supports` 防御 data.json 脏值，非法回退样式表默认；已知限制：弹窗窗口内布局/叶子事件不触发主 workspace 刷新（初始化遍历与主窗口操作兜底）
+- 设置页联动：`setControlValue` 以键数组门控即时刷新与重渲染，滑块（novelIndent）变更只刷新不重建页面
 
 ## 代码规范
 

@@ -21,6 +21,12 @@ const en = {
     loreDirDesc: "Folder for novel lore notes",
     novelDir: "Novel folder",
     novelDirDesc: "Folder for the novel's main text",
+    novelIndent: "Indent size",
+    novelIndentDesc: "First-line indent for novel files (rem)",
+    novelTypesetting: "Novel typesetting",
+    novelTypesettingDesc: "Apply typesetting styles to files in the novel folder",
+    typesetting: "Typesetting",
+    typesettingDesc: "Configure typesetting applied to files in the novel folder",
   },
   structure: {
     created: "Created folders: {dirs}",

@@ -1,4 +1,5 @@
 import { initStructure } from "./structure";
+import { initTypesetting } from "./typesetting";
 import type NovelistsAssistantPlugin from "../main";
 
 /** 各 feature 注册的清理函数，cleanFeatures 在卸载时依序回收 */
@@ -11,6 +12,7 @@ const cleanups: Array<() => void> = [];
  */
 export async function initFeatures(plugin: NovelistsAssistantPlugin): Promise<void> {
   await initStructure(plugin);
+  cleanups.push(initTypesetting(plugin));
 }
 
 /** 卸载时依序回收各 feature 注册的资源（视图叶子等） */
