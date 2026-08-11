@@ -1,0 +1,25 @@
+# vscode
+.vscode
+
+# Intellij
+*.iml
+.idea
+
+# 包管理器
+node_modules
+
+# 构建输出
+dist
+
+# 不将编译生成的 main.js 纳入仓库
+# 它们应上传到 GitHub Releases 中
+main.js
+
+# 排除 sourcemap
+*.map
+
+# obsidian
+data.json
+
+# 排除 macOS Finder（系统资源管理器）视图状态
+.DS_Store

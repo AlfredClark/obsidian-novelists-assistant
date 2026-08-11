@@ -1,0 +1,50 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'src/**'
+              - 'scripts/**'
+              - '**/*.css'
+              - 'esbuild.config.ts'
+              - 'eslint.config.mts'
+              - 'tsconfig.json'
+              - 'package.json'
+              - 'bun.lock'
+              - '.prettierrc'
+              - '.prettierignore'
+              - '.stylelintrc.json'
+              - '.stylelintignore'
+              - '.editorconfig'
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install
+        if: steps.filter.outputs.code == 'true'
+        run: bun install
+
+      - name: Lint
+        if: steps.filter.outputs.code == 'true'
+        run: bun run lint
+
+      - name: Format
+        if: steps.filter.outputs.code == 'true'
+        run: bun run format:check

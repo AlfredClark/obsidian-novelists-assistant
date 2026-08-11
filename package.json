@@ -1,0 +1,53 @@
+{
+  "name": "obsidian-plugin-template",
+  "version": "0.1.0",
+  "description": "Obsidian plugin development template",
+  "license": "GPL-3.0-only",
+  "author": "Alfred Clark",
+  "homepage": "https://github.com/AlfredClark/obsidian-plugin-template",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlfredClark/obsidian-plugin-template.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AlfredClark/obsidian-plugin-template/issues"
+  },
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "template"
+  ],
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "bun esbuild.config.ts",
+    "build": "tsc -noEmit -skipLibCheck && bun scripts/svelte-check.ts && bun esbuild.config.ts production",
+    "lint": "eslint .",
+    "format": "prettier --write . && stylelint \"**/*.css\" --fix",
+    "format:check": "prettier --check . && stylelint \"**/*.css\"",
+    "version": "bun scripts/version-bump.ts && git add manifest.json versions.json",
+    "link": "bun scripts/link-dist.ts --hotreload",
+    "unlink": "bun scripts/unlink-dist.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.2.0",
+    "esbuild": "^0.28.2",
+    "esbuild-svelte": "^0.9.5",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-obsidianmd": "^0.4.1",
+    "eslint-plugin-svelte": "^3.22.0",
+    "globals": "^17.9.0",
+    "jiti": "^2.7.0",
+    "obsidian": "latest",
+    "prettier": "^3.9.6",
+    "prettier-plugin-svelte": "^4.1.1",
+    "stylelint": "^17.14.1",
+    "stylelint-config-standard": "^40.0.0",
+    "svelte": "^5.56.8",
+    "svelte-check": "^4.7.5",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0"
+  }
+}
