@@ -1,11 +1,11 @@
 import { PluginSettingTab } from "obsidian";
 import type { SettingDefinitionItem } from "obsidian";
-import type { TemplatePluginSettings } from "./types";
+import type { NovelistsAssistantSettings } from "./types";
 import { t } from "../i18n";
-import type TemplatePlugin from "../../main";
+import type NovelistsAssistantPlugin from "../../main";
 
 /** 设置默认值。data.json 缺失字段时（如旧版本升级）以此为兜底合并 */
-export const DEFAULT_SETTINGS: TemplatePluginSettings = {
+export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   collapsible: false,
   language: "system",
 };
@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS: TemplatePluginSettings = {
  * 必须在业务功能初始化之前调用，后者依赖 settings 已就绪。
  * @param plugin 插件实例；type-only 导入具体类，运行时无循环
  */
-export async function initSettings(plugin: TemplatePlugin): Promise<void> {
+export async function initSettings(plugin: NovelistsAssistantPlugin): Promise<void> {
   plugin.settings = await loadSettings(plugin);
   plugin.addSettingTab(new SettingsTab(plugin));
 }
@@ -26,8 +26,8 @@ export async function initSettings(plugin: TemplatePlugin): Promise<void> {
  * @param plugin 插件实例
  * @returns 合并后的完整设置对象
  */
-export async function loadSettings(plugin: TemplatePlugin): Promise<TemplatePluginSettings> {
-  const data = (await plugin.loadData()) as Partial<TemplatePluginSettings> | null;
+export async function loadSettings(plugin: NovelistsAssistantPlugin): Promise<NovelistsAssistantSettings> {
+  const data = (await plugin.loadData()) as Partial<NovelistsAssistantSettings> | null;
   return { ...DEFAULT_SETTINGS, ...data };
 }
 
@@ -36,14 +36,14 @@ export async function loadSettings(plugin: TemplatePlugin): Promise<TemplatePlug
  * 读写 plugin.settings 与持久化由 Obsidian 自动完成，无需手写 onChange。
  */
 export class SettingsTab extends PluginSettingTab {
-  plugin: TemplatePlugin;
+  plugin: NovelistsAssistantPlugin;
 
-  constructor(plugin: TemplatePlugin) {
+  constructor(plugin: NovelistsAssistantPlugin) {
     super(plugin.app, plugin);
     this.plugin = plugin;
   }
 
-  getSettingDefinitions(): SettingDefinitionItem<keyof TemplatePluginSettings>[] {
+  getSettingDefinitions(): SettingDefinitionItem<keyof NovelistsAssistantSettings>[] {
     return [
       {
         type: "group",

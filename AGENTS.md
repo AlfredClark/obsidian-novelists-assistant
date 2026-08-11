@@ -1,10 +1,10 @@
-# Obsidian Plugin Template — 开发规范
+# Novelists Assistant — 开发规范
 
 ## 项目概览
 
 - Obsidian 社区插件模板：TypeScript → esbuild → `main.js`
 - 发布产物：`main.js` / `manifest.json` / `styles.css`（位于根目录，GitHub Release 使用）
-- 插件 ID：`obsidian-plugin-template`；许可证：GPL-3.0-only
+- 插件 ID：`novelists-assistant`；许可证：GPL-3.0-only
 
 ## 技术栈
 
@@ -93,7 +93,7 @@
 
 1. **命名**：类/接口 PascalCase，函数/变量 camelCase，常量 UPPER_SNAKE_CASE，文件 kebab-case
 2. **类型**：strict 全开（含 `noUncheckedIndexedAccess`）；禁止 `any` 与隐式 any
-3. **模块**：`cores/`（核心能力）与 `features/`（业务功能）下的每个模块均按三段式组织：`index.ts`（统一出口，仅 re-export）、`types.ts`（类型定义）、`core.ts`（核心逻辑，导出 `init<模块>()` 初始化方法）；各模块 init 方法由 `src/cores/index.ts`/`src/features/index.ts` 分别聚合为 `initCores()`/`initFeatures()`，main.ts 各调用一次；init 方法参数一律使用具体类 `TemplatePlugin`，且导入一律为 `import type`（类型层循环在编译期擦除，运行时无循环）；模块特有文件（如 i18n 的 `locales/`）直接置于模块目录下，不受三段式约束
+3. **模块**：`cores/`（核心能力）与 `features/`（业务功能）下的每个模块均按三段式组织：`index.ts`（统一出口，仅 re-export）、`types.ts`（类型定义）、`core.ts`（核心逻辑，导出 `init<模块>()` 初始化方法）；各模块 init 方法由 `src/cores/index.ts`/`src/features/index.ts` 分别聚合为 `initCores()`/`initFeatures()`，main.ts 各调用一次；init 方法参数一律使用具体类 `NovelistsAssistantPlugin`，且导入一律为 `import type`（类型层循环在编译期擦除，运行时无循环）；模块特有文件（如 i18n 的 `locales/`）直接置于模块目录下，不受三段式约束
 4. **注释**：中文，写"为什么"而非"是什么"；不做多余注释。导出声明（类/接口/函数/常量/属性）一律使用 JSDoc（`/** */`），内部逻辑用行注释；`@param`/`@returns` 仅在参数或返回值存在需要说明的语义时使用，不机械全量添加；纯 re-export 的 index.ts 无需注释
 5. **约束**：禁止 `import node:*` 与 Electron API（`obsidianmd/no-nodejs-modules` 规则）
 6. **依赖**：确认可 bundle 或需加入 esbuild `external` 列表
@@ -131,6 +131,6 @@
 
 ## 构建与发布
 
-- **开发热重载**：`bun run link <vault>/.obsidian/plugins/obsidian-plugin-template` + `bun run dev`，配合 obsidian-hot-reload 插件自动重载
+- **开发热重载**：`bun run link <vault>/.obsidian/plugins/novelists-assistant` + `bun run dev`，配合 obsidian-hot-reload 插件自动重载
 - **版本流程**：`bun run version`（读 package.json 版本 → 更新 manifest.json/versions.json）
 - **Release**：打 tag 触发 GitHub Action（bun 环境）自动构建，产物取自根目录

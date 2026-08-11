@@ -1,21 +1,22 @@
 {
-  "name": "obsidian-plugin-template",
+  "name": "obsidian-novelists-assistant",
   "version": "0.1.0",
-  "description": "Obsidian plugin development template",
+  "description": "Enhance your novel writing experience with various writing tools to keep complex storylines organized",
   "license": "GPL-3.0-only",
   "author": "Alfred Clark",
-  "homepage": "https://github.com/AlfredClark/obsidian-plugin-template",
+  "homepage": "https://github.com/AlfredClark/obsidian-novelists-assistant",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AlfredClark/obsidian-plugin-template.git"
+    "url": "git+https://github.com/AlfredClark/obsidian-novelists-assistant.git"
   },
   "bugs": {
-    "url": "https://github.com/AlfredClark/obsidian-plugin-template/issues"
+    "url": "https://github.com/AlfredClark/obsidian-novelists-assistant/issues"
   },
   "keywords": [
     "obsidian",
     "plugin",
-    "template"
+    "novel",
+    "writing"
   ],
   "main": "main.js",
   "type": "module",

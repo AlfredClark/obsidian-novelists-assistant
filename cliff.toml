@@ -92,4 +92,4 @@ recurse_submodules = false
 
 [remote.github]
 owner = "alfredclark"
-repo = "obsidian-plugin-template"
+repo = "obsidian-novelists-assistant"

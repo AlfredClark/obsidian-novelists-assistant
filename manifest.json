@@ -1,10 +1,10 @@
 {
-  "id": "obsidian-plugin-template",
-  "name": "Obsidian Plugin Template",
+  "id": "novelists-assistant",
+  "name": "Novelists Assistant",
   "version": "0.1.0",
   "minAppVersion": "1.13.0",
-  "description": "Obsidian plugin development template",
+  "description": "Enhance your novel writing experience with various writing tools to keep complex storylines organized",
   "isDesktopOnly": true,
   "author": "Alfred Clark",
-  "authorUrl": "https://github.com/AlfredClark/obsidian-plugin-template"
+  "authorUrl": "https://github.com/AlfredClark/obsidian-novelists-assistant"
 }

@@ -1,5 +1,5 @@
 import { getLanguage } from "obsidian";
-import type TemplatePlugin from "../../main";
+import type NovelistsAssistantPlugin from "../../main";
 import type { SupportedLanguage, TranslationKey, TranslationResource } from "./types";
 import { zh, zhTW } from "./locales/zh";
 import en from "./locales/en";
@@ -13,7 +13,7 @@ const LOCALES: Record<SupportedLanguage, TranslationResource> = {
 
 // 模块级保存插件引用，t() 每次调用时实时读取 settings.language，
 // 设置页 update() 重渲染后文本即自动切换，无需缓存与事件通知
-let pluginRef: TemplatePlugin | null = null;
+let pluginRef: NovelistsAssistantPlugin | null = null;
 
 /**
  * 初始化 i18n 模块。必须在 initSettings 之前调用：
@@ -21,7 +21,7 @@ let pluginRef: TemplatePlugin | null = null;
  * 若此时 pluginRef 未就绪，首次解析将全部回退 system 并被缓存。
  * @param plugin 插件实例
  */
-export async function initI18n(plugin: TemplatePlugin) {
+export async function initI18n(plugin: NovelistsAssistantPlugin) {
   pluginRef = plugin;
 }
 
