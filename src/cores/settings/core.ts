@@ -80,7 +80,7 @@ export class SettingsTab extends PluginSettingTab {
   }
 
   setControlValue(key: string, value: unknown) {
-    super.setControlValue(key, value);
-    this.update();
+    void super.setControlValue(key, value);
+    void this.update();
   }
 }
