@@ -1,10 +1,38 @@
 :root {
+  --text-muted: var(--text-muted);
   --novel-text-indent: 2rem;
-  --novel-line-height: 2rem;
+  --novel-line-height: 1.5rem;
+  --novel-gridlines-size: 5px;
+  --novel-gridlines-space: 5px;
+  --novel-gridlines-thick: 1px;
+  --novel-gridlines-opacity: 50%;
 }
 
 .workspace-leaf-content[data-mode="source"] .cm-content.novel-typeset {
   position: relative;
   text-indent: var(--novel-text-indent, 2rem);
   line-height: var(--novel-line-height, 2rem);
+}
+
+.workspace-leaf-content[data-mode="source"] .cm-content.novel-typeset.novel-gridlines::before {
+  position: absolute;
+  content: "";
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--novel-line-height) - var(--novel-gridlines-thick)),
+    color-mix(in srgb, var(--text-muted) var(--novel-gridlines-opacity), transparent)
+      calc(var(--novel-line-height) - var(--novel-gridlines-thick)),
+    color-mix(in srgb, var(--text-muted) var(--novel-gridlines-opacity), transparent) var(--novel-line-height)
+  );
+  mask-image: repeating-linear-gradient(
+    to right,
+    black 0,
+    black var(--novel-gridlines-size),
+    transparent var(--novel-gridlines-size),
+    transparent calc(var(--novel-gridlines-space) + var(--novel-gridlines-size))
+  );
 }

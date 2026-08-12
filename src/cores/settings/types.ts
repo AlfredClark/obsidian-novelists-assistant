@@ -15,4 +15,10 @@ export interface NovelistsAssistantSettings {
   novelIndent: number; // 正文首行缩进大小（rem，0 表示不缩进）
   novelLineHeight: number; // 正文行高（rem）
   novelTypeset: boolean; // 是否对正文目录内的文件应用排版样式
+  /** 网格线 */
+  novelGridlines: boolean; // 是否对正文目录内的文件显示网格虚线
+  novelGridlinesSize: number; // 网格虚线长度（px）
+  novelGridlinesSpace: number; // 网格虚线间隔（px）
+  novelGridlinesThick: number; // 网格线厚度（px）
+  novelGridlinesOpacity: number; // 网格线不透明度（%）
 }

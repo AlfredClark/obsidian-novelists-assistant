@@ -3,14 +3,25 @@ import type { SettingDefinitionItem, SettingGroupItem } from "obsidian";
 import type { NovelistsAssistantSettings } from "./types";
 import { createDefaultStructure, getDefaultDirectories } from "../../features/structure";
 import { refreshTypeset } from "../../features/typeset";
+import { refreshGridlines } from "../../features/gridlines";
 import { t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
 
 /** 影响排版效果的设置键，变更时须刷新排版类 */
 const TYPESET_SETTING_KEYS: readonly string[] = ["novelDir", "novelTypeset", "novelIndent", "novelLineHeight"];
 
-/** 需要重渲染设置页的设置键：仅文案联动与分组结构变化；其余控件自带显示，避免滑块拖动触发全页重建 */
-const UPDATE_SETTING_KEYS: readonly string[] = ["language", "collapsible"];
+/** 影响网格线效果的设置键，变更时须刷新网格线类 */
+const GRIDLINES_SETTING_KEYS: readonly string[] = [
+  "novelDir",
+  "novelGridlines",
+  "novelGridlinesSize",
+  "novelGridlinesSpace",
+  "novelGridlinesThick",
+  "novelGridlinesOpacity",
+];
+
+/** 需要重渲染设置页的设置键：文案联动、分组结构与开关联动的可见性变化；其余控件自带显示，避免滑块拖动触发全页重建 */
+const UPDATE_SETTING_KEYS: readonly string[] = ["language", "collapsible", "novelTypeset", "novelGridlines"];
 
 /** 设置默认值。data.json 缺失字段时（如旧版本升级）以此为兜底合并 */
 export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
@@ -21,6 +32,11 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   novelIndent: 2,
   novelLineHeight: 2,
   novelTypeset: true,
+  novelGridlines: false,
+  novelGridlinesSize: 5,
+  novelGridlinesSpace: 10,
+  novelGridlinesThick: 1,
+  novelGridlinesOpacity: 50,
 };
 
 /**
@@ -95,6 +111,7 @@ export class SettingsTab extends PluginSettingTab {
       // 可折叠分组：collapsible 开启时收进可导航子页，否则内联展开
       this.buildCollapsibleSection(t("settings.directory"), t("settings.directoryDesc"), this.getDirectoryItems()),
       this.buildCollapsibleSection(t("settings.typeset"), t("settings.typesetDesc"), this.getTypesetItems()),
+      this.buildCollapsibleSection(t("settings.gridlines"), t("settings.gridlinesDesc"), this.getGridlinesItems()),
     ];
   }
 
@@ -170,6 +187,7 @@ export class SettingsTab extends PluginSettingTab {
       {
         name: t("settings.novelIndent"),
         desc: t("settings.novelIndentDesc"),
+        visible: () => this.plugin.settings.novelTypeset,
         control: {
           type: "slider",
           key: "novelIndent",
@@ -182,13 +200,84 @@ export class SettingsTab extends PluginSettingTab {
       {
         name: t("settings.novelLineHeight"),
         desc: t("settings.novelLineHeightDesc"),
+        visible: () => this.plugin.settings.novelTypeset,
         control: {
           type: "slider",
           key: "novelLineHeight",
-          defaultValue: 1.5,
+          defaultValue: 1.75,
           min: 1,
-          max: 3,
+          max: 2.5,
           step: 0.25,
+        },
+      },
+    ];
+  }
+
+  /**
+   * 网格线设置条目：开关与 4 个样式参数（虚线长度/间隔/厚度/不透明度）。
+   * 与其他可折叠分组共用条目结构，容器形态由 collapsible 决定。
+   */
+  private getGridlinesItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
+    return [
+      {
+        name: t("settings.novelGridlines"),
+        desc: t("settings.novelGridlinesDesc"),
+        control: {
+          type: "toggle",
+          key: "novelGridlines",
+          defaultValue: false,
+        },
+      },
+      {
+        name: t("settings.gridlinesSize"),
+        desc: t("settings.gridlinesSizeDesc"),
+        visible: () => this.plugin.settings.novelGridlines,
+        control: {
+          type: "slider",
+          key: "novelGridlinesSize",
+          defaultValue: 5,
+          min: 0,
+          max: 10,
+          step: 1,
+        },
+      },
+      {
+        name: t("settings.gridlinesSpace"),
+        desc: t("settings.gridlinesSpaceDesc"),
+        visible: () => this.plugin.settings.novelGridlines,
+        control: {
+          type: "slider",
+          key: "novelGridlinesSpace",
+          defaultValue: 5,
+          min: 0,
+          max: 10,
+          step: 1,
+        },
+      },
+      {
+        name: t("settings.gridlinesThick"),
+        desc: t("settings.gridlinesThickDesc"),
+        visible: () => this.plugin.settings.novelGridlines,
+        control: {
+          type: "slider",
+          key: "novelGridlinesThick",
+          defaultValue: 1,
+          min: 0,
+          max: 5,
+          step: 0.5,
+        },
+      },
+      {
+        name: t("settings.gridlinesOpacity"),
+        desc: t("settings.gridlinesOpacityDesc"),
+        visible: () => this.plugin.settings.novelGridlines,
+        control: {
+          type: "slider",
+          key: "novelGridlinesOpacity",
+          defaultValue: 75,
+          min: 0,
+          max: 100,
+          step: 5,
         },
       },
     ];
@@ -214,6 +303,7 @@ export class SettingsTab extends PluginSettingTab {
       }
       this.update();
       refreshTypeset(this.plugin);
+      refreshGridlines(this.plugin);
     } finally {
       this.creating = false;
     }
@@ -221,6 +311,14 @@ export class SettingsTab extends PluginSettingTab {
 
   setControlValue(key: string, value: unknown) {
     void super.setControlValue(key, value);
+    // 网格线渲染依赖排版类（CSS 叠加类门控）：排版关闭时拒绝开启网格线并提示
+    if (key === "novelGridlines" && value === true && !this.plugin.settings.novelTypeset) {
+      new Notice(t("settings.gridlinesRequiresTypeset"));
+    }
+    // 关闭正文排版时联动关闭已开启的网格线并提示，避免开关处于无效果的困惑状态
+    if (key === "novelTypeset" && value === false && this.plugin.settings.novelGridlines) {
+      new Notice(t("settings.gridlinesRequiresTypeset"));
+    }
     // 仅文案联动与分组结构变化的键需要重渲染，其余控件自带显示（滑块拖动不重建页面）
     if (UPDATE_SETTING_KEYS.includes(key)) {
       void this.update();
@@ -228,6 +326,10 @@ export class SettingsTab extends PluginSettingTab {
     // 仅排版相关设置变更时刷新排版类，避免语言/折叠等无关设置触发无谓的 DOM 遍历
     if (TYPESET_SETTING_KEYS.includes(key)) {
       refreshTypeset(this.plugin);
+    }
+    // 仅网格线相关设置变更时刷新网格线类
+    if (GRIDLINES_SETTING_KEYS.includes(key)) {
+      refreshGridlines(this.plugin);
     }
   }
 }

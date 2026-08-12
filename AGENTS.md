@@ -42,7 +42,8 @@
 │   │   └── settings/        # 设置模块：持久化设置 + 声明式设置页
 │   ├── features/            # 业务功能：用户可感知的具体功能
 │   │   ├── structure/       # 目录结构：默认目录创建与自动指向（说明见业务功能）
-│   │   └── typeset/     # 排版：正文目录排版样式（说明见业务功能）
+│   │   ├── typeset/         # 排版：正文目录排版样式（说明见业务功能）
+│   │   └── gridlines/       # 网格线：正文网格虚线（说明见业务功能）
 │   ├── utils/               # 无状态纯函数工具（如 svelte 组件挂载，说明见核心能力）
 │   └── main.ts              # 插件入口：仅调用 initCores()/initFeatures() 聚合初始化
 ├── .editorconfig            # 编辑器统一格式（与 .prettierrc 对齐）
@@ -81,7 +82,7 @@
 ### settings（设置）
 
 - `DEFAULT_SETTINGS` 提供默认值，`loadSettings` 从 data.json 读取后与默认值浅合并（展开运算，避免共享默认对象被意外修改），旧版本缺字段时自动兜底
-- 设置页使用 1.13.0+ 声明式 API（`getSettingDefinitions`），读写 `plugin.settings` 与持久化由 Obsidian 自动完成；覆写 `setControlValue` 触发 `update()` 重渲染，语言切换等联动即时生效
+- 设置页使用 1.13.0+ 声明式 API（`getSettingDefinitions`），读写 `plugin.settings` 与持久化由 Obsidian 自动完成；覆写 `setControlValue` 触发 `update()` 重渲染，语言切换等联动即时生效；网格线依赖正文排版：排版关闭时联动关闭网格线并提示，排版未开时拒绝开启网格线（`visible` 谓词控制开关关联条目显隐）
 - 依赖 i18n 模块：界面文案经 `t()` 翻译，`PluginLanguage` 类型自 `../i18n` 导入（依赖方向 settings → i18n，无环）
 
 ### utils（工具）
@@ -110,6 +111,14 @@
 - 依赖方向：settings 值导入 `refreshTypeset` 与两个门控键数组（`TYPESET_SETTING_KEYS` 刷新排版类 / `UPDATE_SETTING_KEYS` 重渲染设置页），本模块仅 type-only 导入 main，无运行时循环
 - `refreshTypeset(plugin)`：经 `iterateAllLeaves` 遍历全部窗口叶子，按 `novelDir` 前缀 + `novelTypeset` 开关增删类与缩进/行高变量；`CSS.supports` 防御 data.json 脏值，非法回退样式表默认；已知限制：弹窗窗口内布局/叶子事件不触发主 workspace 刷新（初始化遍历与主窗口操作兜底）
 - 设置页联动：`setControlValue` 以键数组门控即时刷新与重渲染，滑块（novelIndent）变更只刷新不重建页面
+
+### gridlines（网格线）
+
+- 三段式组织；core.ts 导出 `initGridlines(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`layout-change`/`active-leaf-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
+- `GRIDLINES_CLASS`/`GRIDLINES_SIZE_VAR`/`GRIDLINES_SPACE_VAR`/`GRIDLINES_THICK_VAR`/`GRIDLINES_OPACITY_VAR` 常量位于 types.ts；样式表以 `.novel-typeset.novel-gridlines` 叠加类消费（CSS 兜底默认值）：网格线仅在正文排版开启时渲染，保证 `position: relative` 定位基准与 `--novel-line-height` 对齐
+- 依赖方向：settings 值导入 `refreshGridlines` 与 `GRIDLINES_SETTING_KEYS`，本模块仅 type-only 导入 main，无运行时循环
+- `refreshGridlines(plugin)`：经 `iterateAllLeaves` 遍历全部窗口叶子，按 `novelDir` 前缀 + `novelGridlines` 开关增删类与 size/space/thick/opacity 变量；`CSS.supports` 防御 data.json 脏值，非法回退样式表默认；已知限制：弹窗窗口内布局/叶子事件不触发主 workspace 刷新（初始化遍历与主窗口操作兜底）
+- 设置页联动：`setControlValue` 以键数组门控即时刷新；开关默认关闭，4 个滑块（px/%）变更只刷新不重建页面
 
 ## 代码规范
 
