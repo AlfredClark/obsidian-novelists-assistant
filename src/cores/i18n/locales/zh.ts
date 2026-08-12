@@ -5,7 +5,7 @@ export const zh: TranslationResource = {
   settings: {
     chapterConvert: "章节转换",
     chapterConvertAction: "转换",
-    chapterConvertDesc: "将匹配的章节重命名为「章节格式 + 编号格式」组成的名称",
+    chapterConvertDesc: "将正文目录中匹配的章节重命名为「章节格式 + 编号格式」组成的名称",
     chapterConvertInvalid: "源格式必须包含 # 编号占位符",
     chapterConvertPlaceholder: "待转换的章节格式",
     chapterFormat: "章节格式",
@@ -70,8 +70,16 @@ export const zh: TranslationResource = {
     noChange: "默认目录结构已就绪",
   },
   quickMenu: {
-    newChapter: "新建章节",
+    addToLore: "添加到设定",
+    clearLoreLinks: "清空所有设定链接",
+    clearResult: "已清空 {count} 处设定链接",
     convertResult: "已转换 {converted} 个章节，跳过 {skipped} 个",
+    loreCreated: "已创建设定：{name}",
+    loreCreateFailed: "创建设定失败：{name}",
+    loreExists: "设定「{name}」已存在，已跳过",
+    newChapter: "新建章节",
+    syncLoreLinks: "同步所有设定链接",
+    syncResult: "已同步 {count} 处设定链接",
   },
 };
 
@@ -80,7 +88,7 @@ export const zhTW: TranslationResource = {
   settings: {
     chapterConvert: "章節轉換",
     chapterConvertAction: "轉換",
-    chapterConvertDesc: "將符合的章節重新命名為「章節格式 + 編號格式」組成的名稱",
+    chapterConvertDesc: "將正文目錄中符合的章節重新命名為「章節格式 + 編號格式」組成的名稱",
     chapterConvertInvalid: "來源格式必須包含 # 編號佔位符",
     chapterConvertPlaceholder: "待轉換的章節格式",
     chapterFormat: "章節格式",
@@ -145,7 +153,15 @@ export const zhTW: TranslationResource = {
     noChange: "預設目錄結構已就緒",
   },
   quickMenu: {
-    newChapter: "新建章節",
+    addToLore: "新增到設定",
+    clearLoreLinks: "清空所有設定連結",
+    clearResult: "已清空 {count} 處設定連結",
     convertResult: "已轉換 {converted} 個章節，跳過 {skipped} 個",
+    loreCreated: "已建立設定：{name}",
+    loreCreateFailed: "建立設定失敗：{name}",
+    loreExists: "設定「{name}」已存在，已跳過",
+    newChapter: "新建章節",
+    syncLoreLinks: "同步所有設定連結",
+    syncResult: "已同步 {count} 處設定連結",
   },
 };

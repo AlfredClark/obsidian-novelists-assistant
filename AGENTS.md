@@ -90,7 +90,7 @@
 
 - 无状态纯函数工具目录，无生命周期，不受模块三段式约束：单文件同时导出函数与类型，无 init 方法
 - `svelte.ts`：`mountComponent(target, Component, props?)` 将 Svelte 组件挂载到目标容器（如视图的 `contentEl`），返回 `{ instance, destroy() }`；destroy 卸载组件并清空容器。组件样式经构建配置 `css: "injected"` 注入 `<head>`，卸载后样式标签残留，但编译期 class 哈希保证样式隔离
-- `ambient.d.ts`：`*.svelte` 模块声明，tsc 层放宽 props 类型，精确类型由 svelte-check 校验（build 命令内执行）；不与 `svelte.ts` 同名——TS 对同名 .ts/.d.ts 只保留 .ts，且模块文件内 `declare module` 会被视为模块增强而非法
+- `ambient.d.ts`：全局环境声明文件（无顶层 import/export，保证 declare module 为环境声明而非增强）；`*.svelte` 模块声明，tsc 层放宽 props 类型，精确类型由 svelte-check 校验（build 命令内执行）；不与 `svelte.ts` 同名——TS 对同名 .ts/.d.ts 只保留 .ts，且模块文件内 `declare module` 会被视为模块增强而非法
 - `.svelte` 组件文件属于模块特有文件，置于所属模块目录下（如 `features/<模块>/components/`），不受三段式约束
 
 ## 业务功能
@@ -124,9 +124,11 @@
 ### quick-menu（快捷菜单）
 
 - 三段式组织；core.ts 导出 `initQuickMenu(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`file-menu`（`(menu, file, source, leaf?)`）与 `editor-menu`（`(menu, editor, info)`）经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收，清理函数清空注册条目（防插件重载后菜单项重复）
-- `FileMenuItem`/`EditorMenuItem` 位于 types.ts（含 `title`/`icon`/可选 `showIf` 谓词与异步 `action`）；`FILE_MENU_ITEMS`/`EDITOR_MENU_ITEMS` 两个配置数组分别驱动两事件渲染，新增菜单项只需追加条目（异步 action 的 Promise 由 `onClick` 内 `void` 消费，防未处理 Promise）；菜单项在 init 内注册而非模块级常量，保证 `t()` 在 i18n 初始化后求值
+- `FileMenuItem`/`EditorMenuItem` 位于 types.ts（含 `title`/`icon`/可选 `showIf` 谓词；`action` 异步点击行为与 `submenu` 二级菜单构建器二选一）；`FILE_MENU_ITEMS`/`EDITOR_MENU_ITEMS` 两个配置数组分别驱动两事件渲染，新增菜单项只需追加条目（异步 action 的 Promise 由 `onClick` 内 `void` 消费，防未处理 Promise）；菜单项在 init 内注册而非模块级常量，保证 `t()` 在 i18n 初始化后求值；`MenuItem.setSubmenu` 经模块内 `obsidian.d.ts` 类型增强补齐（未文档化 API，npm 类型包未声明，主流插件实证为返回式签名 `setSubmenu(): Menu`）
 - 文件菜单首个菜单项「新建章节」：`showIf` 检测目标位于 `novelDir` 内或为 `novelDir` 自身（`isInsideOrSelf`）；`createNextChapter` 按 `chapterFormat`（`#` 为编号占位，设置层校验必含 `#`，运行时兜底防脏值）与 `chapterNumberStyle`（数字/中文小写/中文大写，脏值回退 digit）构建正则匹配同目录章节文件取最大编号 +1，冲突时递增直至可用，创建空文件后在当前标签页打开（文件→同目录，文件夹→其内部）；中文编号的识别与转换经 `nzh` 库（零依赖随包打包，`encodeS`/`encodeB`/`decodeS`/`decodeB`），字符集与 nzh 解码能力对齐；章节格式与编号格式经设置页「快捷菜单」分组配置
-- 设置页「快捷菜单」分组含「章节转换」（`render` 变体：输入框 + 转换按钮，输入框临时值不持久化）：`convertChapters` 将 novelDir 内匹配源格式（`#` 匹配三种编号样式任一）的章节文件重命名为 `chapterFormat` + `chapterNumberStyle` 组成的格式，已是目标格式/目标名冲突/重命名失败计入跳过，`rename` 由 Obsidian 自动更新内部链接
+- 设置页「快捷菜单」分组含「章节转换」（`render` 变体：输入框 + 转换按钮，输入框临时值不持久化）：`convertChapters` 将 novelDir 内匹配源格式（`#` 匹配三种编号样式任一）的章节文件重命名为 `chapterFormat` + `chapterNumberStyle` 组成的格式，保留匹配前缀之后的原标题后缀（如 `第 1 章 穿越` → `第 一 章 穿越`），已是目标格式/目标名冲突/重命名失败计入跳过，`rename` 由 Obsidian 自动更新内部链接
+- 编辑菜单首个菜单项「添加到设定」：选中文本且 `loreDir` 已配置时出现，二级菜单列 `loreDir` 直接子文件夹（`submenu` 构建器）；`createLoreNote` 在所选目录创建以选中文本命名的空 .md 文件（仅 trim 不清洗，非法字符/超长由创建失败兜底），仓库内任何位置存在同名（basename 大小写不敏感）设定即跳过并提示，纯空白选中静默跳过，创建成功与失败均提示
+- 编辑菜单另两项「同步/清空所有设定链接」：未选中文本且 `loreDir` 已配置时出现；`wrapLoreNames` 单遍正则包裹——已有 wikilink 与 Markdown 内链（含别名/路径形式）整体跳过不重复包裹、名称按长度降序匹配，`unwrapLoreNames` 仅解除精确 `[[名称]]` 包裹（别名/路径链接不动），两者返回 `{ text, count }` 供 `getValue`/`setValue` 整体替换与提示（count>0 才落盘提示）
 - 依赖方向：值导入 i18n、仅 type-only 导入 main，无运行时循环
 
 ## 代码规范

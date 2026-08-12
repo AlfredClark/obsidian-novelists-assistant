@@ -1,10 +1,9 @@
-import { TFile, TFolder } from "obsidian";
+import { Notice, TFile, TFolder } from "obsidian";
 import Nzhcn from "nzh/cn";
 import { t } from "../../cores/i18n";
 import type { ChapterNumberStyle } from "../../cores/settings";
 import type NovelistsAssistantPlugin from "../../main";
 import type { EditorMenuItem, FileMenuItem } from "./types";
-
 /** 文件菜单项；后续新增菜单项在此追加条目 */
 const FILE_MENU_ITEMS: FileMenuItem[] = [];
 
@@ -135,7 +134,9 @@ export async function convertChapters(
       skipped += 1;
       continue;
     }
-    const newPath = `${file.parent?.path ?? ""}/${chapterFormat.replace(/#/g, encodeChapterNumber(num, style))}.md`;
+    // 保留匹配前缀之后的原标题后缀（如 "第 1 章 穿越" 的 " 穿越"），仅替换编号部分
+    const suffix = file.basename.slice((match[0] ?? "").length);
+    const newPath = `${file.parent?.path ?? ""}/${chapterFormat.replace(/#/g, encodeChapterNumber(num, style))}${suffix}.md`;
     // 已是目标格式或目标名被占用时跳过，避免 rename 报错与编号映射错乱
     if (newPath === file.path || plugin.app.vault.getAbstractFileByPath(newPath)) {
       skipped += 1;
@@ -150,6 +151,94 @@ export async function convertChapters(
     }
   }
   return { converted, skipped };
+}
+
+/**
+ * 在指定目录下创建以选中文本命名的设定文件（.md，空内容）。
+ * 名称仅做 trim 不做字符清洗，非法字符/超长由创建失败兜底提示；
+ * 仓库内任何位置存在同名（basename 大小写不敏感）设定时跳过并提示，创建成功与失败均提示。
+ * @param plugin 插件实例
+ * @param name 选中文本
+ * @param dir 目标目录路径
+ */
+export async function createLoreNote(plugin: NovelistsAssistantPlugin, name: string, dir: string): Promise<void> {
+  const noteName = name.trim();
+  // 纯空白选中静默跳过，不打扰用户
+  if (noteName === "") return;
+  // 全库查重：覆盖原目标路径检查——目标路径文件若存在，其 basename 必然与 noteName 相同
+  const normalized = noteName.toLowerCase();
+  if (plugin.app.vault.getFiles().some((file) => file.basename.toLowerCase() === normalized)) {
+    new Notice(t("quickMenu.loreExists", { name: noteName }));
+    return;
+  }
+  try {
+    await plugin.app.vault.create(`${dir}/${noteName}.md`, "");
+    new Notice(t("quickMenu.loreCreated", { name: noteName }));
+  } catch {
+    new Notice(t("quickMenu.loreCreateFailed", { name: noteName }), 5000);
+  }
+}
+
+/** 收集 loreDir 内全部文件的纯名称（不含扩展名），去重保序 */
+function getLoreNames(plugin: NovelistsAssistantPlugin): string[] {
+  const loreDir = plugin.settings.loreDir;
+  if (loreDir === "") return [];
+  return [
+    ...new Set(
+      plugin.app.vault
+        .getFiles()
+        .filter((file) => isInsideOrSelf(file.path, loreDir))
+        .map((file) => file.basename),
+    ),
+  ];
+}
+
+/**
+ * 单遍扫描包裹设定链接：已有的 wikilink 与 Markdown 内链（含别名/路径形式）整体跳过不重复包裹，
+ * 未链接的名称按长度降序匹配后以 [[]] 包裹；count 为实际包裹处数。
+ * 已知边界：引用式链接 [文本][ref] / [文本] 形式不在保护范围。
+ */
+function wrapLoreNames(text: string, names: string[]): { text: string; count: number } {
+  if (names.length === 0) return { text, count: 0 };
+  // 链接分支优先消费整个 wikilink 或 Markdown 内链 [文本](链接)，名称分支按长度降序避免短名先匹配破坏长名
+  const alternation = [...names]
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegExp)
+    .join("|");
+  const regex = new RegExp(`(\\[\\[[^\\]]*]]|\\[[^\\]]*]\\([^)]*\\))|(${alternation})`, "g");
+  let count = 0;
+  // 显式标注回调参数类型：replace 的扩展参数默认为 any，触发 no-unsafe-return
+  const updated = text.replace(regex, (_match: string, link: string | undefined, name: string | undefined) => {
+    if (link) return link;
+    count += 1;
+    return `[[${name ?? ""}]]`;
+  });
+  return { text: updated, count };
+}
+
+/**
+ * 解除设定链接：仅精确匹配 [[名称]] 的包裹，含别名（[[名|别名]]）或路径的链接不动；
+ * count 为实际解除处数。
+ */
+function unwrapLoreNames(text: string, names: string[]): { text: string; count: number } {
+  if (names.length === 0) return { text, count: 0 };
+  const alternation = [...names]
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegExp)
+    .join("|");
+  const regex = new RegExp(`\\[\\[(${alternation})]]`, "g");
+  let count = 0;
+  // 显式标注回调参数类型：replace 的扩展参数默认为 any，触发 no-unsafe-return
+  const updated = text.replace(regex, (_match: string, name: string | undefined) => {
+    count += 1;
+    return name ?? "";
+  });
+  return { text: updated, count };
+}
+
+/** 正则特殊字符转义，防设定名称破坏匹配模式 */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**
@@ -171,6 +260,49 @@ export function initQuickMenu(plugin: NovelistsAssistantPlugin): () => void {
     action: async (file) => {
       if (file instanceof TFile || file instanceof TFolder) {
         await createNextChapter(plugin, file);
+      }
+    },
+  });
+  EDITOR_MENU_ITEMS.push({
+    title: t("quickMenu.addToLore"),
+    icon: "library",
+    showIf: (editor) => editor.somethingSelected() && plugin.settings.loreDir !== "",
+    submenu: (submenu, editor) => {
+      const folder = plugin.app.vault.getAbstractFileByPath(plugin.settings.loreDir);
+      if (!(folder instanceof TFolder)) return;
+      // 二级菜单仅列直接子文件夹，点击后按选中文本命名创建设定文件
+      for (const child of folder.children) {
+        if (!(child instanceof TFolder)) continue;
+        submenu.addItem((menuItem) =>
+          menuItem
+            .setTitle(child.name)
+            .setIcon("folder")
+            .onClick(() => void createLoreNote(plugin, editor.getSelection(), child.path)),
+        );
+      }
+    },
+  });
+  EDITOR_MENU_ITEMS.push({
+    title: t("quickMenu.syncLoreLinks"),
+    icon: "link",
+    showIf: (editor) => !editor.somethingSelected() && plugin.settings.loreDir !== "",
+    action: async (editor) => {
+      const { text, count } = wrapLoreNames(editor.getValue(), getLoreNames(plugin));
+      if (count > 0) {
+        editor.setValue(text);
+        new Notice(t("quickMenu.syncResult", { count }));
+      }
+    },
+  });
+  EDITOR_MENU_ITEMS.push({
+    title: t("quickMenu.clearLoreLinks"),
+    icon: "unlink",
+    showIf: (editor) => !editor.somethingSelected() && plugin.settings.loreDir !== "",
+    action: async (editor) => {
+      const { text, count } = unwrapLoreNames(editor.getValue(), getLoreNames(plugin));
+      if (count > 0) {
+        editor.setValue(text);
+        new Notice(t("quickMenu.clearResult", { count }));
       }
     },
   });
@@ -197,17 +329,23 @@ export function initQuickMenu(plugin: NovelistsAssistantPlugin): () => void {
     plugin.app.workspace.on("editor-menu", (menu, editor, info) => {
       let separated = false;
       for (const item of EDITOR_MENU_ITEMS) {
-        // 首个条目前插分隔符，与 Obsidian 默认菜单项分割；无条目时不添加
+        if (item.showIf && !item.showIf(editor, info)) continue;
+        // 首个通过 showIf 的条目前插分隔符，与 Obsidian 默认菜单项分割；无条目时不添加
         if (!separated) {
           menu.addSeparator();
           separated = true;
         }
-        menu.addItem((menuItem) =>
-          menuItem
-            .setTitle(item.title)
-            .setIcon(item.icon ?? "file")
-            .onClick(() => void item.action(editor, info)),
-        );
+        menu.addItem((menuItem) => {
+          menuItem.setTitle(item.title).setIcon(item.icon ?? "file");
+          // 二级菜单项与点击项二选一：有 submenu 时悬停展开，否则点击触发 action
+          const { action, submenu } = item;
+          if (submenu) {
+            // setSubmenu() 立即创建并返回二级菜单实例，随即填充条目；悬停时由 Obsidian 展示
+            submenu(menuItem.setSubmenu(), editor, info);
+          } else if (action) {
+            menuItem.onClick(() => void action(editor, info));
+          }
+        });
       }
     }),
   );

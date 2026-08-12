@@ -3,7 +3,8 @@ const en = {
   settings: {
     chapterConvert: "Chapter conversion",
     chapterConvertAction: "Convert",
-    chapterConvertDesc: "Rename matching chapters to the name composed of chapter format and numbering format",
+    chapterConvertDesc:
+      "Rename matching chapters in the novel folder to the name composed of chapter format and numbering format",
     chapterConvertInvalid: "Source format must contain the # placeholder",
     chapterConvertPlaceholder: "Chapter format to convert",
     chapterFormat: "Chapter format",
@@ -68,8 +69,16 @@ const en = {
     noChange: "Default directory structure already in place",
   },
   quickMenu: {
-    newChapter: "New chapter",
+    addToLore: "Add to lore",
+    clearLoreLinks: "Clear all lore links",
+    clearResult: "Cleared {count} lore links",
     convertResult: "Converted {converted} chapters, skipped {skipped}",
+    loreCreated: "Lore note created: {name}",
+    loreCreateFailed: "Failed to create lore note: {name}",
+    loreExists: 'Lore note "{name}" already exists, skipped',
+    newChapter: "New chapter",
+    syncLoreLinks: "Sync all lore links",
+    syncResult: "Synced {count} lore links",
   },
 } as const;
 
