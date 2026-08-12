@@ -1,5 +1,8 @@
 import type { PluginLanguage } from "../i18n";
 
+/** 章节自动编号的样式：数字 / 中文小写 / 中文大写 */
+export type ChapterNumberStyle = "digit" | "chineseLower" | "chineseUpper";
+
 /**
  * 插件设置结构。声明式设置 API 按 key 直接读写此结构，
  * 新增字段须同步在 DEFAULT_SETTINGS 补默认值。
@@ -21,4 +24,7 @@ export interface NovelistsAssistantSettings {
   novelGridlinesSpace: number; // 网格虚线间隔（px）
   novelGridlinesThick: number; // 网格线厚度（px）
   novelGridlinesOpacity: number; // 网格线不透明度（%）
+  /** 快捷菜单 */
+  chapterFormat: string; // 自动编号章节格式，# 为编号占位（如 "第 # 章"）
+  chapterNumberStyle: ChapterNumberStyle; // 章节自动编号样式：数字/中文小写/中文大写
 }

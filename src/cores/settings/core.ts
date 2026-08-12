@@ -34,9 +34,11 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   novelTypeset: true,
   novelGridlines: false,
   novelGridlinesSize: 5,
-  novelGridlinesSpace: 10,
+  novelGridlinesSpace: 5,
   novelGridlinesThick: 1,
-  novelGridlinesOpacity: 50,
+  novelGridlinesOpacity: 75,
+  chapterFormat: "第 # 章",
+  chapterNumberStyle: "digit",
 };
 
 /**
@@ -112,6 +114,7 @@ export class SettingsTab extends PluginSettingTab {
       this.buildCollapsibleSection(t("settings.directory"), t("settings.directoryDesc"), this.getDirectoryItems()),
       this.buildCollapsibleSection(t("settings.typeset"), t("settings.typesetDesc"), this.getTypesetItems()),
       this.buildCollapsibleSection(t("settings.gridlines"), t("settings.gridlinesDesc"), this.getGridlinesItems()),
+      this.buildCollapsibleSection(t("settings.quickMenu"), t("settings.quickMenuDesc"), this.getQuickMenuItems()),
     ];
   }
 
@@ -284,6 +287,38 @@ export class SettingsTab extends PluginSettingTab {
   }
 
   /**
+   * 快捷菜单设置条目：自动编号章节格式。
+   * 与其他可折叠分组共用条目结构，容器形态由 collapsible 决定。
+   */
+  private getQuickMenuItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
+    return [
+      {
+        name: t("settings.chapterFormat"),
+        desc: t("settings.chapterFormatDesc"),
+        control: {
+          type: "text",
+          key: "chapterFormat",
+          defaultValue: "第 # 章",
+        },
+      },
+      {
+        name: t("settings.chapterNumberStyle"),
+        desc: t("settings.chapterNumberStyleDesc"),
+        control: {
+          type: "dropdown",
+          key: "chapterNumberStyle",
+          defaultValue: "digit",
+          options: {
+            digit: t("settings.numberStyleOptions.digit"),
+            chineseLower: t("settings.numberStyleOptions.chineseLower"),
+            chineseUpper: t("settings.numberStyleOptions.chineseUpper"),
+          },
+        },
+      },
+    ];
+  }
+
+  /**
    * 一键创建默认目录结构并按结果反馈；完成后重渲染使目录控件显示新指向。
    * 失败提示保留更长时间以便阅读，成功提示即时消失。
    */
@@ -310,6 +345,12 @@ export class SettingsTab extends PluginSettingTab {
   }
 
   setControlValue(key: string, value: unknown) {
+    // 章节格式必须含 # 编号占位，否则拒绝写入并提示（防无编号命名与死循环）
+    if (key === "chapterFormat" && typeof value === "string" && !value.includes("#")) {
+      new Notice(t("settings.chapterFormatInvalid"));
+      void this.update();
+      return;
+    }
     void super.setControlValue(key, value);
     // 网格线渲染依赖排版类（CSS 叠加类门控）：排版关闭时拒绝开启网格线并提示
     if (key === "novelGridlines" && value === true && !this.plugin.settings.novelTypeset) {

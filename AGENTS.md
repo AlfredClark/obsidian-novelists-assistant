@@ -43,7 +43,8 @@
 │   ├── features/            # 业务功能：用户可感知的具体功能
 │   │   ├── structure/       # 目录结构：默认目录创建与自动指向（说明见业务功能）
 │   │   ├── typeset/         # 排版：正文目录排版样式（说明见业务功能）
-│   │   └── gridlines/       # 网格线：正文网格虚线（说明见业务功能）
+│   │   ├── gridlines/       # 网格线：正文网格虚线（说明见业务功能）
+│   │   └── quick-menu/      # 快捷菜单：文件/编辑菜单事件（说明见业务功能）
 │   ├── utils/               # 无状态纯函数工具（如 svelte 组件挂载，说明见核心能力）
 │   └── main.ts              # 插件入口：仅调用 initCores()/initFeatures() 聚合初始化
 ├── .editorconfig            # 编辑器统一格式（与 .prettierrc 对齐）
@@ -82,7 +83,7 @@
 ### settings（设置）
 
 - `DEFAULT_SETTINGS` 提供默认值，`loadSettings` 从 data.json 读取后与默认值浅合并（展开运算，避免共享默认对象被意外修改），旧版本缺字段时自动兜底
-- 设置页使用 1.13.0+ 声明式 API（`getSettingDefinitions`），读写 `plugin.settings` 与持久化由 Obsidian 自动完成；覆写 `setControlValue` 触发 `update()` 重渲染，语言切换等联动即时生效；网格线依赖正文排版：排版关闭时联动关闭网格线并提示，排版未开时拒绝开启网格线（`visible` 谓词控制开关关联条目显隐）
+- 设置页使用 1.13.0+ 声明式 API（`getSettingDefinitions`），读写 `plugin.settings` 与持久化由 Obsidian 自动完成；覆写 `setControlValue` 触发 `update()` 重渲染，语言切换等联动即时生效；网格线依赖正文排版：排版未开启时开启网格线、或关闭排版时网格线处于开启——仅提示网格线不可用（CSS 叠加类门控下不渲染），不强制回写（`visible` 谓词控制开关关联条目显隐）
 - 依赖 i18n 模块：界面文案经 `t()` 翻译，`PluginLanguage` 类型自 `../i18n` 导入（依赖方向 settings → i18n，无环）
 
 ### utils（工具）
@@ -120,11 +121,18 @@
 - `refreshGridlines(plugin)`：经 `iterateAllLeaves` 遍历全部窗口叶子，按 `novelDir` 前缀 + `novelGridlines` 开关增删类与 size/space/thick/opacity 变量；`CSS.supports` 防御 data.json 脏值，非法回退样式表默认；已知限制：弹窗窗口内布局/叶子事件不触发主 workspace 刷新（初始化遍历与主窗口操作兜底）
 - 设置页联动：`setControlValue` 以键数组门控即时刷新；开关默认关闭，4 个滑块（px/%）变更只刷新不重建页面
 
+### quick-menu（快捷菜单）
+
+- 三段式组织；core.ts 导出 `initQuickMenu(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`file-menu`（`(menu, file, source, leaf?)`）与 `editor-menu`（`(menu, editor, info)`）经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收，清理函数清空注册条目（防插件重载后菜单项重复）
+- `FileMenuItem`/`EditorMenuItem` 位于 types.ts（含 `title`/`icon`/可选 `showIf` 谓词与异步 `action`）；`FILE_MENU_ITEMS`/`EDITOR_MENU_ITEMS` 两个配置数组分别驱动两事件渲染，新增菜单项只需追加条目（异步 action 的 Promise 由 `onClick` 内 `void` 消费，防未处理 Promise）；菜单项在 init 内注册而非模块级常量，保证 `t()` 在 i18n 初始化后求值
+- 文件菜单首个菜单项「新建章节」：`showIf` 检测目标位于 `novelDir` 内或为 `novelDir` 自身（`isInsideOrSelf`）；`createNextChapter` 按 `chapterFormat`（`#` 为编号占位，设置层校验必含 `#`，运行时兜底防脏值）与 `chapterNumberStyle`（数字/中文小写/中文大写，脏值回退 digit）构建正则匹配同目录章节文件取最大编号 +1，冲突时递增直至可用，创建空文件后在当前标签页打开（文件→同目录，文件夹→其内部）；中文编号的识别与转换经 `nzh` 库（零依赖随包打包，`encodeS`/`encodeB`/`decodeS`/`decodeB`），字符集与 nzh 解码能力对齐；章节格式与编号格式经设置页「快捷菜单」分组配置
+- 依赖方向：值导入 i18n、仅 type-only 导入 main，无运行时循环
+
 ## 代码规范
 
 1. **命名**：类/接口 PascalCase，函数/变量 camelCase，常量 UPPER_SNAKE_CASE，文件 kebab-case
 2. **类型**：strict 全开（含 `noUncheckedIndexedAccess`）；禁止 `any` 与隐式 any
-3. **模块**：`cores/`（核心能力）与 `features/`（业务功能）下的每个模块均按三段式组织：`index.ts`（统一出口，仅 re-export）、`types.ts`（类型定义）、`core.ts`（核心逻辑，导出 `init<模块>()` 初始化方法）；各模块 init 方法由 `src/cores/index.ts`/`src/features/index.ts` 分别聚合为 `initCores()`/`initFeatures()`，main.ts 各调用一次；init 方法参数一律使用具体类 `NovelistsAssistantPlugin`，且导入一律为 `import type`（类型层循环在编译期擦除，运行时无循环）；模块特有文件（如 i18n 的 `locales/`）直接置于模块目录下，不受三段式约束
+3. **模块**：`cores/`（核心能力）与 `features/`（业务功能）下的每个模块均按三段式组织：`index.ts`（统一出口，仅 re-export）、`types.ts`（类型定义）、`core.ts`（核心逻辑，导出 `init<模块>()` 初始化方法）；模块目录使用 kebab-case，多词模块以 `-` 分隔（如 `quick-menu`），`init<模块>()` 方法名由模块名转 camelCase 派生（如 `initQuickMenu`）；各模块 init 方法由 `src/cores/index.ts`/`src/features/index.ts` 分别聚合为 `initCores()`/`initFeatures()`，main.ts 各调用一次；init 方法参数一律使用具体类 `NovelistsAssistantPlugin`，且导入一律为 `import type`（类型层循环在编译期擦除，运行时无循环）；模块特有文件（如 i18n 的 `locales/`）直接置于模块目录下，不受三段式约束
 4. **注释**：中文，写"为什么"而非"是什么"；不做多余注释。导出声明（类/接口/函数/常量/属性）一律使用 JSDoc（`/** */`），内部逻辑用行注释；types.ts 中属性注释置于属性后方（行注释），需分组时以独立一行的 `/** */` 组注释标注；`@param`/`@returns` 仅在参数或返回值存在需要说明的语义时使用，不机械全量添加；纯 re-export 的 index.ts 无需注释
 5. **约束**：禁止 `import node:*` 与 Electron API（`obsidianmd/no-nodejs-modules` 规则）
 6. **依赖**：确认可 bundle 或需加入 esbuild `external` 列表

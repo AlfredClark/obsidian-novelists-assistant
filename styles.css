@@ -1,11 +1,10 @@
 :root {
-  --text-muted: var(--text-muted);
   --novel-text-indent: 2rem;
   --novel-line-height: 1.5rem;
   --novel-gridlines-size: 5px;
   --novel-gridlines-space: 5px;
   --novel-gridlines-thick: 1px;
-  --novel-gridlines-opacity: 50%;
+  --novel-gridlines-opacity: 75%;
 }
 
 .workspace-leaf-content[data-mode="source"] .cm-content.novel-typeset {
@@ -35,4 +34,12 @@
     transparent var(--novel-gridlines-size),
     transparent calc(var(--novel-gridlines-space) + var(--novel-gridlines-size))
   );
+}
+
+/* 仅供 IDE 解析 Obsidian 内置变量（WebStorm 报"无法解析自定义属性"）；
+   @media not all 恒不匹配，运行时零副作用 */
+@media not all {
+  :root {
+    --text-muted: #666;
+  }
 }

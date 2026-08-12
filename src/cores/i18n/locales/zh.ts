@@ -3,6 +3,16 @@ import type { TranslationResource } from "../types";
 /** 简体中文资源。标注 TranslationResource 强制与英文同构，键缺失或多余都会编译报错 */
 export const zh: TranslationResource = {
   settings: {
+    chapterFormat: "章节格式",
+    chapterFormatDesc: "用于自动编号的章节格式，用#代替编号占位",
+    chapterFormatInvalid: "章节格式必须包含 # 编号占位符",
+    chapterNumberStyle: "编号格式",
+    chapterNumberStyleDesc: "章节自动编号的数字样式",
+    numberStyleOptions: {
+      digit: "阿拉伯数字",
+      chineseLower: "中文小写",
+      chineseUpper: "中文大写",
+    },
     collapsible: "折叠分组",
     collapsibleDesc: "是否折叠设置分组",
     createStructure: "创建默认目录结构",
@@ -42,6 +52,8 @@ export const zh: TranslationResource = {
     novelTypesetDesc: "对正文目录内的文件应用排版样式",
     novelGridlines: "网格线",
     novelGridlinesDesc: "对正文目录内的文件显示网格线",
+    quickMenu: "快捷菜单",
+    quickMenuDesc: "配置添加到文件与编辑菜单中的菜单项",
     typeset: "排版设置",
     typesetDesc: "配置正文目录内文件的排版样式",
   },
@@ -52,11 +64,24 @@ export const zh: TranslationResource = {
     failed: "创建文件夹失败：{dirs}",
     noChange: "默认目录结构已就绪",
   },
+  quickMenu: {
+    newChapter: "新建章节",
+  },
 };
 
 /** 繁体中文资源。标注 TranslationResource 强制与英文同构，键缺失或多余都会编译报错 */
 export const zhTW: TranslationResource = {
   settings: {
+    chapterFormat: "章節格式",
+    chapterFormatDesc: "用於自動編號的章節格式，用#代替編號佔位",
+    chapterFormatInvalid: "章節格式必須包含 # 編號佔位符",
+    chapterNumberStyle: "編號格式",
+    chapterNumberStyleDesc: "章節自動編號的數字樣式",
+    numberStyleOptions: {
+      digit: "阿拉伯數字",
+      chineseLower: "中文小寫",
+      chineseUpper: "中文大寫",
+    },
     collapsible: "摺疊分組",
     collapsibleDesc: "是否摺疊設定分組",
     createStructure: "建立預設目錄結構",
@@ -96,6 +121,8 @@ export const zhTW: TranslationResource = {
     novelTypesetDesc: "對正文目錄內的檔案套用排版樣式",
     novelGridlines: "網格線",
     novelGridlinesDesc: "對正文目錄內的檔案顯示網格線",
+    quickMenu: "快捷選單",
+    quickMenuDesc: "設定新增到檔案與編輯選單中的選單項目",
     typeset: "排版設定",
     typesetDesc: "設定正文目錄內檔案的排版樣式",
   },
@@ -105,5 +132,8 @@ export const zhTW: TranslationResource = {
     defaultNovel: "正文",
     failed: "建立資料夾失敗：{dirs}",
     noChange: "預設目錄結構已就緒",
+  },
+  quickMenu: {
+    newChapter: "新建章節",
   },
 };

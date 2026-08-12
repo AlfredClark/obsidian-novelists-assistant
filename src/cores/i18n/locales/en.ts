@@ -1,6 +1,16 @@
 /** 英文资源。结构作为 TranslationResource 的类型源，其余语言与其同构保证键一致 */
 const en = {
   settings: {
+    chapterFormat: "Chapter format",
+    chapterFormatDesc: "Chapter format for auto-numbering; use # as the digit placeholder (e.g. 第 # 章)",
+    chapterFormatInvalid: "Chapter format must contain the # placeholder",
+    chapterNumberStyle: "Numbering format",
+    chapterNumberStyleDesc: "Number style for chapter auto-numbering",
+    numberStyleOptions: {
+      digit: "Digits",
+      chineseLower: "Chinese lowercase",
+      chineseUpper: "Chinese uppercase",
+    },
     collapsible: "Collapsible groups",
     collapsibleDesc: "Allow settings groups to be collapsed",
     createStructure: "Create default directory structure",
@@ -40,6 +50,8 @@ const en = {
     novelTypesetDesc: "Apply typesetting styles to files in the novel folder",
     novelGridlines: "Grid lines",
     novelGridlinesDesc: "Show grid lines under each line in novel files",
+    quickMenu: "Quick menu",
+    quickMenuDesc: "Configure menu items added to the file and editor menus",
     typeset: "Typesetting",
     typesetDesc: "Configure typesetting applied to files in the novel folder",
   },
@@ -49,6 +61,9 @@ const en = {
     defaultNovel: "Novel",
     failed: "Failed to create folders: {dirs}",
     noChange: "Default directory structure already in place",
+  },
+  quickMenu: {
+    newChapter: "New chapter",
   },
 } as const;
 
