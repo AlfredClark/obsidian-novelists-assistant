@@ -2,12 +2,12 @@ import { Notice, PluginSettingTab } from "obsidian";
 import type { SettingDefinitionItem, SettingGroupItem } from "obsidian";
 import type { NovelistsAssistantSettings } from "./types";
 import { createDefaultStructure, getDefaultDirectories } from "../../features/structure";
-import { refreshTypesetting } from "../../features/typesetting";
+import { refreshTypeset } from "../../features/typeset";
 import { t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
 
 /** 影响排版效果的设置键，变更时须刷新排版类 */
-const TYPESETTING_SETTING_KEYS: readonly string[] = ["novelDir", "novelTypesetting", "novelIndent"];
+const TYPESET_SETTING_KEYS: readonly string[] = ["novelDir", "novelTypeset", "novelIndent", "novelLineHeight"];
 
 /** 需要重渲染设置页的设置键：仅文案联动与分组结构变化；其余控件自带显示，避免滑块拖动触发全页重建 */
 const UPDATE_SETTING_KEYS: readonly string[] = ["language", "collapsible"];
@@ -19,7 +19,8 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   loreDir: "",
   novelDir: "",
   novelIndent: 2,
-  novelTypesetting: true,
+  novelLineHeight: 2,
+  novelTypeset: true,
 };
 
 /**
@@ -93,7 +94,7 @@ export class SettingsTab extends PluginSettingTab {
       },
       // 可折叠分组：collapsible 开启时收进可导航子页，否则内联展开
       this.buildCollapsibleSection(t("settings.directory"), t("settings.directoryDesc"), this.getDirectoryItems()),
-      this.buildCollapsibleSection(t("settings.typesetting"), t("settings.typesettingDesc"), this.getTypesettingItems()),
+      this.buildCollapsibleSection(t("settings.typeset"), t("settings.typesetDesc"), this.getTypesetItems()),
     ];
   }
 
@@ -155,14 +156,14 @@ export class SettingsTab extends PluginSettingTab {
    * 排版设置条目：正文排版开关与首行缩进大小。
    * 与其他可折叠分组共用条目结构，容器形态由 collapsible 决定。
    */
-  private getTypesettingItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
+  private getTypesetItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
     return [
       {
-        name: t("settings.novelTypesetting"),
-        desc: t("settings.novelTypesettingDesc"),
+        name: t("settings.novelTypeset"),
+        desc: t("settings.novelTypesetDesc"),
         control: {
           type: "toggle",
-          key: "novelTypesetting",
+          key: "novelTypeset",
           defaultValue: true,
         },
       },
@@ -176,7 +177,18 @@ export class SettingsTab extends PluginSettingTab {
           min: 0,
           max: 4,
           step: 1,
-          displayFormat: (value) => `${value}rem`,
+        },
+      },
+      {
+        name: t("settings.novelLineHeight"),
+        desc: t("settings.novelLineHeightDesc"),
+        control: {
+          type: "slider",
+          key: "novelLineHeight",
+          defaultValue: 1.5,
+          min: 1,
+          max: 3,
+          step: 0.25,
         },
       },
     ];
@@ -201,7 +213,7 @@ export class SettingsTab extends PluginSettingTab {
         new Notice(t("structure.noChange"));
       }
       this.update();
-      refreshTypesetting(this.plugin);
+      refreshTypeset(this.plugin);
     } finally {
       this.creating = false;
     }
@@ -214,8 +226,8 @@ export class SettingsTab extends PluginSettingTab {
       void this.update();
     }
     // 仅排版相关设置变更时刷新排版类，避免语言/折叠等无关设置触发无谓的 DOM 遍历
-    if (TYPESETTING_SETTING_KEYS.includes(key)) {
-      refreshTypesetting(this.plugin);
+    if (TYPESET_SETTING_KEYS.includes(key)) {
+      refreshTypeset(this.plugin);
     }
   }
 }

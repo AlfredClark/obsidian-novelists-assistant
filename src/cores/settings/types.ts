@@ -13,5 +13,6 @@ export interface NovelistsAssistantSettings {
   novelDir: string; // 正文目录路径，空字符串表示未配置
   /** 排版 */
   novelIndent: number; // 正文首行缩进大小（rem，0 表示不缩进）
-  novelTypesetting: boolean; // 是否对正文目录内的文件应用排版样式
+  novelLineHeight: number; // 正文行高（rem）
+  novelTypeset: boolean; // 是否对正文目录内的文件应用排版样式
 }

@@ -1,7 +1,10 @@
 :root {
-  --novelists-indent: 2rem;
+  --novel-text-indent: 2rem;
+  --novel-line-height: 2rem;
 }
 
-[data-mode="source"] .cm-content.novelists-typesetting {
-  text-indent: var(--novelists-indent, 2rem);
+.workspace-leaf-content[data-mode="source"] .cm-content.novel-typeset {
+  position: relative;
+  text-indent: var(--novel-text-indent, 2rem);
+  line-height: var(--novel-line-height, 2rem);
 }
