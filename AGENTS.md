@@ -108,10 +108,12 @@
 ### typeset（排版）
 
 - 三段式组织；core.ts 导出 `initTypeset(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`layout-change`/`active-leaf-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
-- `TYPESET_CLASS`/`TYPESET_TEXT_INDENT_VAR`/`TYPESET_LINE_HEIGHT_VAR` 常量位于 types.ts；样式表以 `[data-mode="source"] .cm-content.novel-typeset` + `var(--novel-text-indent, 2rem)`/`var(--novel-line-height, 2rem)` 消费（CSS 兜底默认值）
-- 依赖方向：settings 值导入 `refreshTypeset` 与两个门控键数组（`TYPESET_SETTING_KEYS` 刷新排版类 / `UPDATE_SETTING_KEYS` 重渲染设置页），本模块仅 type-only 导入 main，无运行时循环
-- `refreshTypeset(plugin)`：经 `iterateAllLeaves` 遍历全部窗口叶子，按 `novelDir` 前缀 + `novelTypeset` 开关增删类与缩进/行高变量；`CSS.supports` 防御 data.json 脏值，非法回退样式表默认；已知限制：弹窗窗口内布局/叶子事件不触发主 workspace 刷新（初始化遍历与主窗口操作兜底）
-- 设置页联动：`setControlValue` 以键数组门控即时刷新与重渲染，滑块（novelIndent）变更只刷新不重建页面
+- `TYPESET_CLASS`/`TYPESET_TEXT_INDENT_VAR`/`TYPESET_LINE_HEIGHT_VAR` 常量位于 types.ts；样式表以 `[data-mode="source"] .cm-content.novel-typeset` + `var(--novel-text-indent, 2rem)`/`var(--novel-line-height, 2rem)` 消费（CSS 兜底默认值）；阅读视图另有独立变量 `PREVIEW_TEXT_INDENT_VAR`/`PREVIEW_LINE_HEIGHT_VAR`，样式表以 `[data-mode="preview"] .markdown-preview-view` + `var(--novel-preview-text-indent, 2rem)`/`var(--novel-preview-line-height, 2rem)` 消费
+- 依赖方向：settings 值导入 `refreshTypeset`、`rerenderPreviewLeaves` 与两个门控键数组（`TYPESET_SETTING_KEYS` 刷新排版类 / `UPDATE_SETTING_KEYS` 重渲染设置页），本模块仅 type-only 导入 main，无运行时循环
+- `refreshTypeset(plugin)`：经 `iterateAllLeaves` 遍历全部窗口叶子，按 `novelDir` 前缀 + 视图开关增删类与缩进/行高变量——源码视图由 `novelTypeset` 门控（目标 `.cm-content`，参数 `novelIndent`/`novelLineHeight` 写入 `--novel-*` 变量），阅读视图由独立开关 `novelPreviewTypeset` 门控（目标 `.markdown-preview-view`，参数 `novelPreviewIndent`/`novelPreviewLineHeight` 写入 `--novel-preview-*` 变量，类名共用，选择器按 data-mode 区分）；`CSS.supports` 防御 data.json 脏值，非法回退样式表默认；已知限制：弹窗窗口内布局/叶子事件不触发主 workspace 刷新（初始化遍历与主窗口操作兜底）
+- 阅读视图渲染管线：`initTypeset` 额外经 `plugin.registerMarkdownPostProcessor` 注册 `renderPreview`，每次渲染完成按 `ctx.sourcePath` 判定目录与 `novelPreviewTypeset` 开关，依序执行变换管线 `PREVIEW_TRANSFORMS`（`PreviewTransform` 接口位于 types.ts，新增阅读视图排版规则只需追加条目并补充对应 CSS）；不满足条件时移除残留的 `PREVIEW_CLASS` 类（类可安全移除且不影响拆分结构），防御增量渲染复用 DOM；段落变换选择 `.el-p p` 段落，将其替换为 `div.novel-preview` 容器（p 内嵌 p 非法，div 内嵌 div 合法），把其中 `<br>` 软换行拆分为独立行 `div.novel-preview`（每行独立缩进），末段文本同样包裹为行 div（`text-indent` 只作用于块首行，嵌套块后的直接文本行不缩进），每段经 `trimParagraphEdges` 清理首尾空白（软换行行尾空格残留），清理后为空的行删除，纯空段（仅 `<br>`）保留不动作为分段空隙；已变换的段落不再命中 `.el-p p`，重复执行天然幂等；容器类与变量仍由 `refreshTypeset` 维护
+- `rerenderPreviewLeaves(plugin)`：设置页开关/目录变更时对全部已打开预览视图执行 `previewMode.rerender(true)`，重建段落结构使管线变换即时生效；滑块变更只改 CSS 变量不触发重渲染
+- 设置页联动：`setControlValue` 以键数组门控即时刷新与重渲染，滑块（`novelIndent`/`novelLineHeight`/`novelPreviewIndent`/`novelPreviewLineHeight`）变更只刷新不重建页面；各视图的缩进/行高滑块 `visible` 由对应视图的排版开关决定
 
 ### gridlines（网格线）
 

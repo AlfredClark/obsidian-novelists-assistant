@@ -1,6 +1,8 @@
 :root {
   --novel-text-indent: 2rem;
-  --novel-line-height: 1.5rem;
+  --novel-line-height: 1.75rem;
+  --novel-preview-text-indent: 2rem;
+  --novel-preview-line-height: 1.75rem;
   --novel-gridlines-size: 5px;
   --novel-gridlines-space: 5px;
   --novel-gridlines-thick: 1px;
@@ -34,6 +36,20 @@
     transparent var(--novel-gridlines-size),
     transparent calc(var(--novel-gridlines-space) + var(--novel-gridlines-size))
   );
+}
+
+.workspace-leaf-content[data-mode="preview"] .markdown-preview-view .el-p div.novel-preview {
+  text-indent: var(--novel-preview-text-indent, 2rem);
+  line-height: var(--novel-preview-line-height, 2rem);
+}
+
+.workspace-leaf-content[data-mode="preview"] .markdown-preview-view .el-p div.novel-preview p {
+  margin: 0;
+}
+
+/* 纯空段（仅 <br>）作为分段空隙保留高度，不缩进 */
+.workspace-leaf-content[data-mode="preview"] .markdown-preview-view .el-p div.novel-preview:has(> br:only-child) {
+  text-indent: 0;
 }
 
 /* 仅供 IDE 解析 Obsidian 内置变量（WebStorm 报"无法解析自定义属性"）；

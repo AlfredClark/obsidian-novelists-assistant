@@ -2,14 +2,22 @@ import { Notice, PluginSettingTab, TextComponent } from "obsidian";
 import type { SettingDefinitionItem, SettingGroupItem } from "obsidian";
 import type { NovelistsAssistantSettings } from "./types";
 import { createDefaultStructure, getDefaultDirectories } from "../../features/structure";
-import { refreshTypeset } from "../../features/typeset";
+import { refreshTypeset, rerenderPreviewLeaves } from "../../features/typeset";
 import { refreshGridlines } from "../../features/gridlines";
 import { convertChapters } from "../../features/quick-menu";
 import { t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
 
 /** 影响排版效果的设置键，变更时须刷新排版类 */
-const TYPESET_SETTING_KEYS: readonly string[] = ["novelDir", "novelTypeset", "novelIndent", "novelLineHeight"];
+const TYPESET_SETTING_KEYS: readonly string[] = [
+  "novelDir",
+  "novelTypeset",
+  "novelPreviewTypeset",
+  "novelIndent",
+  "novelLineHeight",
+  "novelPreviewIndent",
+  "novelPreviewLineHeight",
+];
 
 /** 影响网格线效果的设置键，变更时须刷新网格线类 */
 const GRIDLINES_SETTING_KEYS: readonly string[] = [
@@ -22,7 +30,13 @@ const GRIDLINES_SETTING_KEYS: readonly string[] = [
 ];
 
 /** 需要重渲染设置页的设置键：文案联动、分组结构与开关联动的可见性变化；其余控件自带显示，避免滑块拖动触发全页重建 */
-const UPDATE_SETTING_KEYS: readonly string[] = ["language", "collapsible", "novelTypeset", "novelGridlines"];
+const UPDATE_SETTING_KEYS: readonly string[] = [
+  "language",
+  "collapsible",
+  "novelTypeset",
+  "novelPreviewTypeset",
+  "novelGridlines",
+];
 
 /** 设置默认值。data.json 缺失字段时（如旧版本升级）以此为兜底合并 */
 export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
@@ -31,8 +45,11 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   loreDir: "",
   novelDir: "",
   novelIndent: 2,
-  novelLineHeight: 2,
+  novelLineHeight: 1.75,
   novelTypeset: true,
+  novelPreviewTypeset: true,
+  novelPreviewIndent: 2,
+  novelPreviewLineHeight: 1.75,
   novelGridlines: false,
   novelGridlinesSize: 5,
   novelGridlinesSpace: 5,
@@ -174,7 +191,7 @@ export class SettingsTab extends PluginSettingTab {
   }
 
   /**
-   * 排版设置条目：正文排版开关与首行缩进大小。
+   * 排版设置条目：源码/阅读视图各自的排版开关与缩进、行高参数。
    * 与其他可折叠分组共用条目结构，容器形态由 collapsible 决定。
    */
   private getTypesetItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
@@ -208,6 +225,41 @@ export class SettingsTab extends PluginSettingTab {
         control: {
           type: "slider",
           key: "novelLineHeight",
+          defaultValue: 1.75,
+          min: 1,
+          max: 2.5,
+          step: 0.25,
+        },
+      },
+      {
+        name: t("settings.novelPreviewTypeset"),
+        desc: t("settings.novelPreviewTypesetDesc"),
+        control: {
+          type: "toggle",
+          key: "novelPreviewTypeset",
+          defaultValue: true,
+        },
+      },
+      {
+        name: t("settings.novelPreviewIndent"),
+        desc: t("settings.novelPreviewIndentDesc"),
+        visible: () => this.plugin.settings.novelPreviewTypeset,
+        control: {
+          type: "slider",
+          key: "novelPreviewIndent",
+          defaultValue: 2,
+          min: 0,
+          max: 4,
+          step: 1,
+        },
+      },
+      {
+        name: t("settings.novelPreviewLineHeight"),
+        desc: t("settings.novelPreviewLineHeightDesc"),
+        visible: () => this.plugin.settings.novelPreviewTypeset,
+        control: {
+          type: "slider",
+          key: "novelPreviewLineHeight",
           defaultValue: 1.75,
           min: 1,
           max: 2.5,
@@ -397,6 +449,11 @@ export class SettingsTab extends PluginSettingTab {
     // 仅排版相关设置变更时刷新排版类，避免语言/折叠等无关设置触发无谓的 DOM 遍历
     if (TYPESET_SETTING_KEYS.includes(key)) {
       refreshTypeset(this.plugin);
+      // 阅读视图段落类由渲染管线维护：开关/目录变更须全量重渲染已打开的预览视图即时生效；
+      // 滑块变更仅改 CSS 变量（容器类即时生效），无需重建
+      if (key === "novelPreviewTypeset" || key === "novelDir") {
+        rerenderPreviewLeaves(this.plugin);
+      }
     }
     // 仅网格线相关设置变更时刷新网格线类
     if (GRIDLINES_SETTING_KEYS.includes(key)) {

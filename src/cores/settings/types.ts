@@ -18,6 +18,9 @@ export interface NovelistsAssistantSettings {
   novelIndent: number; // 正文首行缩进大小（rem，0 表示不缩进）
   novelLineHeight: number; // 正文行高（rem）
   novelTypeset: boolean; // 是否对正文目录内的文件应用排版样式
+  novelPreviewTypeset: boolean; // 是否在阅读视图对正文目录内的文件应用排版样式
+  novelPreviewIndent: number; // 阅读视图首行缩进大小（rem，0 表示不缩进）
+  novelPreviewLineHeight: number; // 阅读视图行高（rem）
   /** 网格线 */
   novelGridlines: boolean; // 是否对正文目录内的文件显示网格虚线
   novelGridlinesSize: number; // 网格虚线长度（px）
