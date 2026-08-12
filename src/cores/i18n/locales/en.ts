@@ -1,6 +1,11 @@
 /** 英文资源。结构作为 TranslationResource 的类型源，其余语言与其同构保证键一致 */
 const en = {
   settings: {
+    chapterConvert: "Chapter conversion",
+    chapterConvertAction: "Convert",
+    chapterConvertDesc: "Rename matching chapters to the name composed of chapter format and numbering format",
+    chapterConvertInvalid: "Source format must contain the # placeholder",
+    chapterConvertPlaceholder: "Chapter format to convert",
     chapterFormat: "Chapter format",
     chapterFormatDesc: "Chapter format for auto-numbering; use # as the digit placeholder (e.g. 第 # 章)",
     chapterFormatInvalid: "Chapter format must contain the # placeholder",
@@ -64,6 +69,7 @@ const en = {
   },
   quickMenu: {
     newChapter: "New chapter",
+    convertResult: "Converted {converted} chapters, skipped {skipped}",
   },
 } as const;
 

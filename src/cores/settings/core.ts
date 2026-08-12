@@ -1,9 +1,10 @@
-import { Notice, PluginSettingTab } from "obsidian";
+import { Notice, PluginSettingTab, TextComponent } from "obsidian";
 import type { SettingDefinitionItem, SettingGroupItem } from "obsidian";
 import type { NovelistsAssistantSettings } from "./types";
 import { createDefaultStructure, getDefaultDirectories } from "../../features/structure";
 import { refreshTypeset } from "../../features/typeset";
 import { refreshGridlines } from "../../features/gridlines";
+import { convertChapters } from "../../features/quick-menu";
 import { t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
 
@@ -315,6 +316,23 @@ export class SettingsTab extends PluginSettingTab {
           },
         },
       },
+      {
+        name: t("settings.chapterConvert"),
+        desc: t("settings.chapterConvertDesc"),
+        render: (setting) => {
+          // 输入框为临时值不持久化；按钮触发章节转换（提升变量供按钮回调读取）
+          let input: TextComponent | null = null;
+          setting.addText((text) => {
+            text.setPlaceholder(t("settings.chapterConvertPlaceholder"));
+            input = text;
+          });
+          setting.addButton((button) =>
+            button.setButtonText(t("settings.chapterConvertAction")).onClick(() => {
+              void this.handleChapterConvert(input?.getValue() ?? "");
+            }),
+          );
+        },
+      },
     ];
   }
 
@@ -342,6 +360,18 @@ export class SettingsTab extends PluginSettingTab {
     } finally {
       this.creating = false;
     }
+  }
+
+  /**
+   * 章节转换：源格式必须含 # 编号占位，否则提示无效；转换完成后按统计反馈。
+   */
+  private async handleChapterConvert(sourceFormat: string): Promise<void> {
+    if (!sourceFormat.includes("#")) {
+      new Notice(t("settings.chapterConvertInvalid"));
+      return;
+    }
+    const { converted, skipped } = await convertChapters(this.plugin, sourceFormat);
+    new Notice(t("quickMenu.convertResult", { converted, skipped }));
   }
 
   setControlValue(key: string, value: unknown) {

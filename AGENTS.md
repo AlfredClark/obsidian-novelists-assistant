@@ -126,6 +126,7 @@
 - 三段式组织；core.ts 导出 `initQuickMenu(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`file-menu`（`(menu, file, source, leaf?)`）与 `editor-menu`（`(menu, editor, info)`）经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收，清理函数清空注册条目（防插件重载后菜单项重复）
 - `FileMenuItem`/`EditorMenuItem` 位于 types.ts（含 `title`/`icon`/可选 `showIf` 谓词与异步 `action`）；`FILE_MENU_ITEMS`/`EDITOR_MENU_ITEMS` 两个配置数组分别驱动两事件渲染，新增菜单项只需追加条目（异步 action 的 Promise 由 `onClick` 内 `void` 消费，防未处理 Promise）；菜单项在 init 内注册而非模块级常量，保证 `t()` 在 i18n 初始化后求值
 - 文件菜单首个菜单项「新建章节」：`showIf` 检测目标位于 `novelDir` 内或为 `novelDir` 自身（`isInsideOrSelf`）；`createNextChapter` 按 `chapterFormat`（`#` 为编号占位，设置层校验必含 `#`，运行时兜底防脏值）与 `chapterNumberStyle`（数字/中文小写/中文大写，脏值回退 digit）构建正则匹配同目录章节文件取最大编号 +1，冲突时递增直至可用，创建空文件后在当前标签页打开（文件→同目录，文件夹→其内部）；中文编号的识别与转换经 `nzh` 库（零依赖随包打包，`encodeS`/`encodeB`/`decodeS`/`decodeB`），字符集与 nzh 解码能力对齐；章节格式与编号格式经设置页「快捷菜单」分组配置
+- 设置页「快捷菜单」分组含「章节转换」（`render` 变体：输入框 + 转换按钮，输入框临时值不持久化）：`convertChapters` 将 novelDir 内匹配源格式（`#` 匹配三种编号样式任一）的章节文件重命名为 `chapterFormat` + `chapterNumberStyle` 组成的格式，已是目标格式/目标名冲突/重命名失败计入跳过，`rename` 由 Obsidian 自动更新内部链接
 - 依赖方向：值导入 i18n、仅 type-only 导入 main，无运行时循环
 
 ## 代码规范

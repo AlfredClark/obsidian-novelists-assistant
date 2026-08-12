@@ -3,6 +3,11 @@ import type { TranslationResource } from "../types";
 /** 简体中文资源。标注 TranslationResource 强制与英文同构，键缺失或多余都会编译报错 */
 export const zh: TranslationResource = {
   settings: {
+    chapterConvert: "章节转换",
+    chapterConvertAction: "转换",
+    chapterConvertDesc: "将匹配的章节重命名为「章节格式 + 编号格式」组成的名称",
+    chapterConvertInvalid: "源格式必须包含 # 编号占位符",
+    chapterConvertPlaceholder: "待转换的章节格式",
     chapterFormat: "章节格式",
     chapterFormatDesc: "用于自动编号的章节格式，用#代替编号占位",
     chapterFormatInvalid: "章节格式必须包含 # 编号占位符",
@@ -66,12 +71,18 @@ export const zh: TranslationResource = {
   },
   quickMenu: {
     newChapter: "新建章节",
+    convertResult: "已转换 {converted} 个章节，跳过 {skipped} 个",
   },
 };
 
 /** 繁体中文资源。标注 TranslationResource 强制与英文同构，键缺失或多余都会编译报错 */
 export const zhTW: TranslationResource = {
   settings: {
+    chapterConvert: "章節轉換",
+    chapterConvertAction: "轉換",
+    chapterConvertDesc: "將符合的章節重新命名為「章節格式 + 編號格式」組成的名稱",
+    chapterConvertInvalid: "來源格式必須包含 # 編號佔位符",
+    chapterConvertPlaceholder: "待轉換的章節格式",
     chapterFormat: "章節格式",
     chapterFormatDesc: "用於自動編號的章節格式，用#代替編號佔位",
     chapterFormatInvalid: "章節格式必須包含 # 編號佔位符",
@@ -135,5 +146,6 @@ export const zhTW: TranslationResource = {
   },
   quickMenu: {
     newChapter: "新建章節",
+    convertResult: "已轉換 {converted} 個章節，跳過 {skipped} 個",
   },
 };

@@ -30,10 +30,18 @@ function isChapterNumberStyle(style: unknown): style is ChapterNumberStyle {
 
 /**
  * 按章节格式与编号样式构建章节名匹配正则：转义格式后把 # 占位替换为对应样式的数字捕获组，锚定开头。
+ * style 为 "any" 时匹配三种编号样式任一（数字/中文小写/中文大写），用于章节转换识别混合编号。
  * 格式不含 # 时按字面整体匹配（编号从 1 开始）。
  */
-function buildChapterRegex(format: string, style: ChapterNumberStyle): RegExp {
-  const pattern = style === "digit" ? "(\\d+)" : `([${style === "chineseLower" ? CN_LOWER_CHARS : CN_UPPER_CHARS}]+)`;
+function buildChapterRegex(format: string, style: ChapterNumberStyle | "any"): RegExp {
+  const pattern =
+    style === "digit"
+      ? "(\\d+)"
+      : style === "chineseLower"
+        ? `([${CN_LOWER_CHARS}]+)`
+        : style === "chineseUpper"
+          ? `([${CN_UPPER_CHARS}]+)`
+          : `(\\d+|[${CN_LOWER_CHARS}]+|[${CN_UPPER_CHARS}]+)`;
   return new RegExp(`^${format.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/#/g, pattern)}`);
 }
 
@@ -47,6 +55,13 @@ function decodeChapterNumber(token: string, style: ChapterNumberStyle): number {
 function encodeChapterNumber(num: number, style: ChapterNumberStyle): string {
   if (style === "digit") return String(num);
   return style === "chineseLower" ? Nzhcn.encodeS(num) : Nzhcn.encodeB(num);
+}
+
+/** 按 token 形态解码章节数字（数字/中文小写/中文大写），解码失败返回 NaN 由调用方忽略 */
+function decodeChapterToken(token: string): number {
+  if (/^\d+$/.test(token)) return Number(token);
+  if ([...token].every((char) => CN_LOWER_CHARS.includes(char))) return Number(Nzhcn.decodeS(token));
+  return Number(Nzhcn.decodeB(token));
 }
 
 /**
@@ -90,6 +105,51 @@ export async function createNextChapter(plugin: NovelistsAssistantPlugin, target
   } catch {
     // 创建失败（非法字符/竞态等）静默放弃，不抛未处理 Promise
   }
+}
+
+/**
+ * 章节转换：将 novelDir 内匹配源格式的章节文件重命名为目标格式（chapterFormat + chapterNumberStyle）。
+ * 源格式的 # 匹配三种编号样式任一；已是目标格式、目标名冲突或重命名失败均计入跳过。
+ * @param plugin 插件实例
+ * @param sourceFormat 源章节格式（与 chapterFormat 同语法，# 为编号占位）
+ * @returns 转换统计，调用方负责反馈
+ */
+export async function convertChapters(
+  plugin: NovelistsAssistantPlugin,
+  sourceFormat: string,
+): Promise<{ converted: number; skipped: number }> {
+  const { chapterFormat, chapterNumberStyle } = plugin.settings;
+  const style = isChapterNumberStyle(chapterNumberStyle) ? chapterNumberStyle : "digit";
+  const novelDir = plugin.settings.novelDir;
+  // 源格式无 # 或正文目录未配置时无可转换目标，直接返回由调用方提示
+  if (!sourceFormat.includes("#") || novelDir === "") return { converted: 0, skipped: 0 };
+  const regex = buildChapterRegex(sourceFormat, "any");
+  let converted = 0;
+  let skipped = 0;
+  for (const file of plugin.app.vault.getFiles()) {
+    if (!isInsideOrSelf(file.path, novelDir)) continue;
+    const match = regex.exec(file.basename);
+    if (!match?.[1]) continue;
+    const num = decodeChapterToken(match[1]);
+    if (!Number.isFinite(num)) {
+      skipped += 1;
+      continue;
+    }
+    const newPath = `${file.parent?.path ?? ""}/${chapterFormat.replace(/#/g, encodeChapterNumber(num, style))}.md`;
+    // 已是目标格式或目标名被占用时跳过，避免 rename 报错与编号映射错乱
+    if (newPath === file.path || plugin.app.vault.getAbstractFileByPath(newPath)) {
+      skipped += 1;
+      continue;
+    }
+    try {
+      // rename 由 Obsidian 自动更新内部链接
+      await plugin.app.vault.rename(file, newPath);
+      converted += 1;
+    } catch {
+      skipped += 1;
+    }
+  }
+  return { converted, skipped };
 }
 
 /**
