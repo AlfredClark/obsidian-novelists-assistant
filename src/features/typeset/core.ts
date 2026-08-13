@@ -165,10 +165,21 @@ function applyParagraphTypeset(el: HTMLElement): void {
 }
 
 /**
+ * 剔除 <a> 超链接外层标签、保留内部文本：链接的下划线/颜色样式破坏小说排版观感，
+ * Markdown 链接与 wikilink 渲染均为 <a>，一并处理。剔除后无 <a> 可再命中，重复执行天然幂等；
+ * 开关关闭/目录变更后由 rerenderPreviewLeaves 全量重渲染重建 DOM 恢复链接。
+ */
+function unwrapLinks(el: HTMLElement): void {
+  el.querySelectorAll("a").forEach((link) => {
+    link.replaceWith(...link.childNodes);
+  });
+}
+
+/**
  * 阅读视图渲染变换管线。renderPreview 依序执行；
  * 新增阅读视图排版规则只需追加条目（apply 内操作渲染后的内容根 el）并补充对应 CSS。
  */
-const PREVIEW_TRANSFORMS: readonly PreviewTransform[] = [{ apply: applyParagraphTypeset }];
+const PREVIEW_TRANSFORMS: readonly PreviewTransform[] = [{ apply: unwrapLinks }, { apply: applyParagraphTypeset }];
 
 /**
  * 阅读视图渲染处理器（MarkdownPostProcessor）：每次渲染完成回调，
