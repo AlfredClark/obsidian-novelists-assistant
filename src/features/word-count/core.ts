@@ -178,7 +178,8 @@ export function refreshWordCountTexts(plugin: NovelistsAssistantPlugin): void {
 
 /**
  * 判定文件夹的统计角色：设定文件夹自身计组数、正文文件夹自身计章节数、
- * 设定文件夹的直接子文件夹计设定数。精确匹配优先于子文件夹规则，
+ * 设定文件夹的直接子文件夹计设定数、正文文件夹的直接子文件夹计章节数。
+ * 精确匹配优先于子文件夹规则，且 lore 规则优先于 novel 规则，
  * 防 loreDir/novelDir 嵌套或相等时角色冲突。
  * @param plugin 插件实例
  * @param path 文件夹路径
@@ -194,6 +195,12 @@ function resolveFolderRole(plugin: NovelistsAssistantPlugin, path: string): Fold
     const relative = path.slice(lorePrefix.length);
     if (relative !== "" && !relative.includes("/")) return "loreNotes";
   }
+  // 正文直接子文件夹计章节数；如需任意层级，去掉相对路径不含 "/" 的判定即可
+  const novelPrefix = novelDir.replace(/\/+$/, "") + "/";
+  if (novelDir !== "" && path.startsWith(novelPrefix)) {
+    const relative = path.slice(novelPrefix.length);
+    if (relative !== "" && !relative.includes("/")) return "novelSubdirs";
+  }
   return null;
 }
 
@@ -207,15 +214,9 @@ function countLoreNotes(folder: TFolder): number {
   return folder.children.filter((child) => child instanceof TFile && child.extension === "md").length;
 }
 
-/** 设定文件夹的设定总数：loreDir 前缀下递归 md 文件个数（含嵌套孙文件夹与根下散落文件） */
-function countLoreNotesTotal(plugin: NovelistsAssistantPlugin): number {
-  const prefix = plugin.settings.loreDir.replace(/\/+$/, "") + "/";
-  return plugin.app.vault.getFiles().filter((file) => file.extension === "md" && file.path.startsWith(prefix)).length;
-}
-
-/** 正文文件夹的章节数：novelDir 前缀下递归 md 文件个数（含子文件夹） */
-function countChapters(plugin: NovelistsAssistantPlugin): number {
-  const prefix = plugin.settings.novelDir.replace(/\/+$/, "") + "/";
+/** 目录递归 md 文件数：前缀下所有 md 文件（含子文件夹），设定总数与章节数共用的计数口径 */
+function countMdFiles(plugin: NovelistsAssistantPlugin, dir: string): number {
+  const prefix = dir.replace(/\/+$/, "") + "/";
   return plugin.app.vault.getFiles().filter((file) => file.extension === "md" && file.path.startsWith(prefix)).length;
 }
 
@@ -241,11 +242,13 @@ function getFolderCounts(
   let total = 0;
   if (role === "loreGroups") {
     count = countLoreGroups(folder);
-    total = countLoreNotesTotal(plugin);
+    total = countMdFiles(plugin, plugin.settings.loreDir);
   } else if (role === "loreNotes") {
     count = countLoreNotes(folder);
+  } else if (role === "chapters") {
+    count = countMdFiles(plugin, plugin.settings.novelDir);
   } else {
-    count = countChapters(plugin);
+    count = countMdFiles(plugin, path);
   }
   folderCountCache.set(path, { role, count, total });
   return { count, total };
@@ -254,14 +257,17 @@ function getFolderCounts(
 /**
  * 按角色组装文件夹统计文案，多段以 " | " 连接：
  * loreGroups 为「设定总数 | 组数」；chapters 为「总字数 | 章节数」（wordCount 关闭时仅章节数）；
- * loreNotes 仅设定数。各段单位为空时无空格分隔。
+ * novelSubdirs 与 chapters 同口径，但字数按子文件夹自身前缀递归；loreNotes 仅设定数。
+ * 各段单位为空时无空格分隔。
  */
 async function buildFolderCountText(plugin: NovelistsAssistantPlugin, path: string, role: FolderCountRole): Promise<string> {
   const { count, total } = getFolderCounts(plugin, path, role);
-  if (role === "chapters") {
+  if (role === "chapters" || role === "novelSubdirs") {
     const chapters = formatCount(count, plugin.settings.folderCountChapterUnit);
     if (!plugin.settings.wordCount) return chapters;
-    const words = await sumWordCounts(plugin, plugin.settings.novelDir);
+    // chapters 用设置值求和（路径与设置严格相等，防御带尾斜杠的脏路径）；子文件夹用自身路径
+    const dir = role === "chapters" ? plugin.settings.novelDir : path;
+    const words = await sumWordCounts(plugin, dir);
     return `${formatCount(words, plugin.settings.wordCountUnit)} | ${chapters}`;
   }
   if (role === "loreGroups") {
@@ -338,7 +344,8 @@ function scheduleScan(plugin: NovelistsAssistantPlugin): void {
 
 /**
  * 初始化字数统计：在文件列表每个 md 文件标题后追加「XXX 字」，
- * 并在设定/正文文件夹标题后追加「设定总数 | 组数」「总字数 | 章节数」统计。
+ * 并在设定/正文文件夹标题后追加「设定总数 | 组数」「总字数 | 章节数」统计，
+ * 正文文件夹的直接子文件夹同样追加「总字数 | 章节数」（按自身前缀递归）。
  * 文件树项渲染无现成事件：MutationObserver 监听主文档子树（debounce）捕获新增项，
  * layout-change 兜底折叠/排序等重渲染；modify 事件按路径即时更新字数并联动目录总字数，
  * create/delete/rename 清文件夹缓存并重扫（折叠文件夹无子节点 DOM 变更，MutationObserver 兜不住）。
