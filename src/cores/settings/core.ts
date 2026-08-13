@@ -5,7 +5,7 @@ import { createDefaultStructure, getDefaultDirectories } from "../../features/st
 import { refreshTypeset, rerenderPreviewLeaves } from "../../features/typeset";
 import { refreshGridlines } from "../../features/gridlines";
 import { convertChapters } from "../../features/quick-menu";
-import { refreshFolderCounts, refreshWordCount, refreshWordCountTexts } from "../../features/word-count";
+import { refreshFolderCounts, refreshStatusBar, refreshWordCount, refreshWordCountTexts } from "../../features/word-count";
 import { t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
 
@@ -561,16 +561,18 @@ export class SettingsTab extends PluginSettingTab {
     if (GRIDLINES_SETTING_KEYS.includes(key)) {
       refreshGridlines(this.plugin);
     }
-    // 字数开关变更：刷新文件列表装饰，并联动文件夹刷新（正文目录字部分显隐）
+    // 字数开关变更：刷新文件列表装饰、状态栏显隐，并联动文件夹刷新（正文目录字部分显隐）
     if (WORD_COUNT_SETTING_KEYS.includes(key)) {
       refreshWordCount(this.plugin);
       refreshFolderCounts(this.plugin);
+      refreshStatusBar(this.plugin);
     }
     // 单位变更仅影响文案：重设已装饰标题的统计文本，装饰增删由 wordCount 门控处理
     if (key === "wordCountUnit") {
       refreshWordCountTexts(this.plugin);
-      // 正文目录总字数的「字」部分同样消费该单位
+      // 正文目录总字数的「字」部分与状态栏文案同样消费该单位
       refreshFolderCounts(this.plugin);
+      refreshStatusBar(this.plugin);
     }
     // 仅文件夹统计相关设置变更时刷新文件夹装饰（角色/开关/单位/目录）
     if (FOLDER_COUNT_SETTING_KEYS.includes(key)) {

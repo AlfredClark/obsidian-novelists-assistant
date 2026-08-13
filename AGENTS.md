@@ -45,7 +45,7 @@
 │   │   ├── typeset/         # 排版：正文目录排版样式（说明见业务功能）
 │   │   ├── gridlines/       # 网格线：正文网格虚线（说明见业务功能）
 │   │   ├── quick-menu/      # 快捷菜单：文件/编辑菜单事件（说明见业务功能）
-│   │   └── word-count/      # 字数统计：文件列表字数显示（说明见业务功能）
+│   │   └── word-count/      # 字数统计：文件列表与状态栏字数显示（说明见业务功能）
 │   ├── utils/               # 无状态纯函数工具（如 svelte 组件挂载，说明见核心能力）
 │   └── main.ts              # 插件入口：仅调用 initCores()/initFeatures() 聚合初始化
 ├── .editorconfig            # 编辑器统一格式（与 .prettierrc 对齐）
@@ -143,7 +143,8 @@
 - 文件夹统计：`resolveFolderRole` 判定角色——loreDir 自身（loreGroups）、novelDir 自身（chapters）、loreDir 直接子文件夹（loreNotes，相对路径不含 `/`）、novelDir 直接子文件夹（novelSubdirs，仅直接子文件夹，任意层级需去掉相对路径不含 `/` 判定）；精确匹配优先于子文件夹规则且 lore 规则优先于 novel 规则，防目录嵌套/相等时角色冲突；loreGroups 显示「递归设定总数 | 直接子文件夹组数」，chapters 显示「总字数 | 递归章节数」（wordCount 关闭时仅章节数），novelSubdirs 与 chapters 同口径但字数/章节数按子文件夹自身前缀递归，loreNotes 显示直接 md 文件数（非递归）；同步计数（children/getFiles 均在内存）由 `folderCountCache: Map<path, {role, count, total}>` 缓存（条目含角色，目录设置变更导致同路径角色变化时自愈失效，total 仅 loreGroups 使用），递归 md 文件数经 `countMdFiles` 统一计算（设定总数与章节数共用），目录总字数经 `sumWordCounts` 复用 per-file 缓存求和——同一文件同一 mtime 只读一次内容，modify 仅重读被改文件；create/delete/rename 清缓存并复用 debounce 扫描（折叠文件夹无子节点 DOM 变更，MutationObserver 兜不住）；modify 事件对 novelDir 前缀内文件额外触发文件夹刷新（子目录统计天然覆盖）；`refreshFolderCounts(plugin)` 开关开启时按角色装饰命中文件夹、不再命中的已装饰项移除残留，setText 前比对旧值防 DOM 抖动
 - 展示文案经 `formatCount(count, unit)` 拼接：单位非空时以空格分隔（如 "123 字"），为空时仅数字无空格，文件夹多段以 " | " 连接；单位值不国际化、设置层写入前 trim；`refreshWordCountTexts(plugin)` 重设已装饰标题文案（单位变更时调用，与 `refreshWordCount` 区分——后者跳过已处理项且被 MutationObserver 高频触发，全量重算浪费）
 - 文件树项渲染无现成事件：MutationObserver 监听主文档 body 子树（100ms debounce）捕获新增项，`layout-change` 兜底折叠/排序等重渲染，rename 仅清缓存由重扫描兜底；已知限制：弹窗窗口 DOM 不在主文档，其文件树不显示统计
-- 设置页「字数统计」分组含文件字数开关（默认开启）与单位输入框（默认「字」）、文件夹统计开关（默认开启）与三组单位输入框（默认「组」/「条」/「章」，开关关闭时隐藏，`UPDATE_SETTING_KEYS` 联动显隐），`setControlValue` 以 `WORD_COUNT_SETTING_KEYS` 门控装饰增删、`wordCount`/`wordCountUnit` 同时联动文件夹刷新（正文目录字部分消费二者）、`FOLDER_COUNT_SETTING_KEYS`（含 loreDir/novelDir）触发文件夹装饰刷新；依赖方向：settings 值导入本模块，本模块仅 type-only 导入 main，无运行时循环
+- 状态栏字数：`refreshStatusBar(plugin)` 复用 `wordCount` 开关与 `wordCountUnit` 单位，经 `addStatusBarItem` 显示当前活动文件字数——取 `workspace.activeEditor` 编辑器实时内容（未保存也计入，保存后与文件树磁盘统计收敛一致）；`editor-change` 每击键触发经 200ms debounce 合并（大章节全量正则成本高），`active-leaf-change` 切换即时刷新，非 md 文件或无编辑器时清空文案；初始化时自动禁用核心 word-count 插件防双数值并存（`app.plugins.disablePlugin` 为未文档化 API，官方类型包未声明，经 `disableCoreWordCount` 窄接口断言访问，`wordCount` 关闭时不禁用）；已知限制：弹窗窗口编辑不触发事件，状态栏不随其更新
+- 设置页「字数统计」分组含文件字数开关（默认开启）与单位输入框（默认「字」）、文件夹统计开关（默认开启）与三组单位输入框（默认「组」/「条」/「章」，开关关闭时隐藏，`UPDATE_SETTING_KEYS` 联动显隐），`setControlValue` 以 `WORD_COUNT_SETTING_KEYS` 门控装饰增删与状态栏显隐、`wordCount`/`wordCountUnit` 同时联动文件夹刷新与状态栏（正文目录字部分与状态栏文案消费二者）、`FOLDER_COUNT_SETTING_KEYS`（含 loreDir/novelDir）触发文件夹装饰刷新；依赖方向：settings 值导入本模块，本模块仅 type-only 导入 main，无运行时循环
 
 ## 代码规范
 

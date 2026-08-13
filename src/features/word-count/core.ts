@@ -13,6 +13,12 @@ const folderCountCache = new Map<string, { role: FolderCountRole; count: number;
 /** 文件树渲染变更的 debounce 定时器，批量处理 MutationObserver 捕获的新增项 */
 let scanTimer: number | null = null;
 
+/** 状态栏字数元素：init 时创建、卸载时移除；null 表示未初始化（settings 联动先于 init 触发时防御） */
+let statusBarEl: HTMLElement | null = null;
+
+/** 状态栏字数刷新的 debounce 定时器，合并 editor-change 高频触发（大章节每击键全量正则成本高） */
+let statusTimer: number | null = null;
+
 /** CJK 逐字计数测试：汉字/假名/谚文 + 全角字母数字；全角标点不在范围自然不计 */
 const CJK_CHAR_RE =
   /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\uFF10-\uFF19\uFF21-\uFF3A\uFF41-\uFF5A]/u;
@@ -342,10 +348,46 @@ function scheduleScan(plugin: NovelistsAssistantPlugin): void {
   }, 100);
 }
 
+/** 自动禁用核心 word-count 插件：app.plugins 为未文档化 API（官方类型包未声明），
+ *  经窄接口断言访问，防双数值并存（wordCount 关闭时不禁用，用户可回归原生统计） */
+function disableCoreWordCount(plugin: NovelistsAssistantPlugin): void {
+  const plugins = (plugin.app as unknown as { plugins: { disablePlugin(id: string): void } }).plugins;
+  plugins.disablePlugin("word-count");
+}
+
+/**
+ * 刷新状态栏字数：按 wordCount 开关与活动编辑器内容统计（未保存内容实时计入），
+ * 单位复用 wordCountUnit。非 md 文件或无活动编辑器时清空文案。
+ * 保存后与文件树统计（按磁盘内容）收敛一致。
+ * @param plugin 插件实例
+ */
+export function refreshStatusBar(plugin: NovelistsAssistantPlugin): void {
+  if (!statusBarEl) return;
+  const activeEditor = plugin.app.workspace.activeEditor;
+  const file = activeEditor?.file;
+  if (!plugin.settings.wordCount || !file || file.extension !== "md" || !activeEditor?.editor) {
+    statusBarEl.setText("");
+    return;
+  }
+  const count = countWords(activeEditor.editor.getValue());
+  statusBarEl.setText(formatCount(count, plugin.settings.wordCountUnit));
+}
+
+/** 调度状态栏刷新：editor-change 每击键触发，debounce 合并同批击键后再全量计数 */
+function scheduleStatusRefresh(plugin: NovelistsAssistantPlugin): void {
+  if (statusTimer !== null) window.clearTimeout(statusTimer);
+  statusTimer = window.setTimeout(() => {
+    statusTimer = null;
+    refreshStatusBar(plugin);
+  }, 200);
+}
+
 /**
  * 初始化字数统计：在文件列表每个 md 文件标题后追加「XXX 字」，
  * 并在设定/正文文件夹标题后追加「设定总数 | 组数」「总字数 | 章节数」统计，
- * 正文文件夹的直接子文件夹同样追加「总字数 | 章节数」（按自身前缀递归）。
+ * 正文文件夹的直接子文件夹同样追加「总字数 | 章节数」（按自身前缀递归）；
+ * 状态栏追加当前文件字数（复用 wordCount 开关与 wordCountUnit 单位），
+ * 并自动禁用核心 word-count 插件避免两个数值并存。
  * 文件树项渲染无现成事件：MutationObserver 监听主文档子树（debounce）捕获新增项，
  * layout-change 兜底折叠/排序等重渲染；modify 事件按路径即时更新字数并联动目录总字数，
  * create/delete/rename 清文件夹缓存并重扫（折叠文件夹无子节点 DOM 变更，MutationObserver 兜不住）。
@@ -355,6 +397,15 @@ function scheduleScan(plugin: NovelistsAssistantPlugin): void {
 export function initWordCount(plugin: NovelistsAssistantPlugin): () => void {
   const observer = new MutationObserver(() => scheduleScan(plugin));
   observer.observe(document.body, { childList: true, subtree: true });
+
+  statusBarEl = plugin.addStatusBarItem();
+  // 核心 word-count 插件统计原始文本，与自定义统计并存会显示两个不同数值：开启时自动禁用
+  if (plugin.settings.wordCount) {
+    disableCoreWordCount(plugin);
+  }
+  plugin.registerEvent(plugin.app.workspace.on("editor-change", () => scheduleStatusRefresh(plugin)));
+  plugin.registerEvent(plugin.app.workspace.on("active-leaf-change", () => refreshStatusBar(plugin)));
+  refreshStatusBar(plugin);
 
   plugin.registerEvent(
     plugin.app.vault.on("modify", (file) => {
@@ -395,6 +446,10 @@ export function initWordCount(plugin: NovelistsAssistantPlugin): () => void {
     observer.disconnect();
     if (scanTimer !== null) window.clearTimeout(scanTimer);
     scanTimer = null;
+    if (statusTimer !== null) window.clearTimeout(statusTimer);
+    statusTimer = null;
+    statusBarEl?.remove();
+    statusBarEl = null;
     removeAllWordCounts();
     removeAllFolderCounts();
     countCache.clear();
