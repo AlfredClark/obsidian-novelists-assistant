@@ -5,6 +5,7 @@ import { createDefaultStructure, getDefaultDirectories } from "../../features/st
 import { refreshTypeset, rerenderPreviewLeaves } from "../../features/typeset";
 import { refreshGridlines } from "../../features/gridlines";
 import { convertChapters } from "../../features/quick-menu";
+import { refreshFolderCounts, refreshWordCount, refreshWordCountTexts } from "../../features/word-count";
 import { t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
 
@@ -36,6 +37,21 @@ const UPDATE_SETTING_KEYS: readonly string[] = [
   "novelTypeset",
   "novelPreviewTypeset",
   "novelGridlines",
+  "wordCount",
+  "folderCount",
+];
+
+/** 影响字数统计效果的设置键，变更时须刷新文件列表装饰 */
+const WORD_COUNT_SETTING_KEYS: readonly string[] = ["wordCount"];
+
+/** 影响文件夹统计效果的设置键，变更时须刷新文件夹装饰 */
+const FOLDER_COUNT_SETTING_KEYS: readonly string[] = [
+  "folderCount",
+  "folderCountGroupUnit",
+  "folderCountLoreUnit",
+  "folderCountChapterUnit",
+  "loreDir",
+  "novelDir",
 ];
 
 /** 设置默认值。data.json 缺失字段时（如旧版本升级）以此为兜底合并 */
@@ -57,6 +73,12 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   novelGridlinesOpacity: 75,
   chapterFormat: "第 # 章",
   chapterNumberStyle: "digit",
+  wordCount: true,
+  wordCountUnit: "字",
+  folderCount: true,
+  folderCountGroupUnit: "组",
+  folderCountLoreUnit: "条",
+  folderCountChapterUnit: "章",
 };
 
 /**
@@ -133,6 +155,7 @@ export class SettingsTab extends PluginSettingTab {
       this.buildCollapsibleSection(t("settings.typeset"), t("settings.typesetDesc"), this.getTypesetItems()),
       this.buildCollapsibleSection(t("settings.gridlines"), t("settings.gridlinesDesc"), this.getGridlinesItems()),
       this.buildCollapsibleSection(t("settings.quickMenu"), t("settings.quickMenuDesc"), this.getQuickMenuItems()),
+      this.buildCollapsibleSection(t("settings.wordCount"), t("settings.wordCountDesc"), this.getWordCountItems()),
     ];
   }
 
@@ -389,6 +412,74 @@ export class SettingsTab extends PluginSettingTab {
   }
 
   /**
+   * 字数统计设置条目：文件字数开关与单位、文件夹统计开关与三组单位。
+   * 与其他可折叠分组共用条目结构，容器形态由 collapsible 决定。
+   */
+  private getWordCountItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
+    return [
+      {
+        name: t("settings.wordCountToggle"),
+        desc: t("settings.wordCountDesc"),
+        control: {
+          type: "toggle",
+          key: "wordCount",
+          defaultValue: true,
+        },
+      },
+      {
+        name: t("settings.wordCountUnit"),
+        desc: t("settings.wordCountUnitDesc"),
+        visible: () => this.plugin.settings.wordCount,
+        control: {
+          type: "text",
+          key: "wordCountUnit",
+          defaultValue: "字",
+          placeholder: t("settings.wordCountUnitPlaceholder"),
+        },
+      },
+      {
+        name: t("settings.folderCountToggle"),
+        desc: t("settings.folderCountDesc"),
+        control: {
+          type: "toggle",
+          key: "folderCount",
+          defaultValue: true,
+        },
+      },
+      {
+        name: t("settings.folderCountGroupUnit"),
+        desc: t("settings.folderCountGroupUnitDesc"),
+        visible: () => this.plugin.settings.folderCount,
+        control: {
+          type: "text",
+          key: "folderCountGroupUnit",
+          defaultValue: "组",
+        },
+      },
+      {
+        name: t("settings.folderCountLoreUnit"),
+        desc: t("settings.folderCountLoreUnitDesc"),
+        visible: () => this.plugin.settings.folderCount,
+        control: {
+          type: "text",
+          key: "folderCountLoreUnit",
+          defaultValue: "条",
+        },
+      },
+      {
+        name: t("settings.folderCountChapterUnit"),
+        desc: t("settings.folderCountChapterUnitDesc"),
+        visible: () => this.plugin.settings.folderCount,
+        control: {
+          type: "text",
+          key: "folderCountChapterUnit",
+          defaultValue: "章",
+        },
+      },
+    ];
+  }
+
+  /**
    * 一键创建默认目录结构并按结果反馈；完成后重渲染使目录控件显示新指向。
    * 失败提示保留更长时间以便阅读，成功提示即时消失。
    */
@@ -433,6 +524,17 @@ export class SettingsTab extends PluginSettingTab {
       void this.update();
       return;
     }
+    // 字数单位先 trim 再写入，防手输首尾空格进入展示文案
+    if (key === "wordCountUnit" && typeof value === "string") {
+      value = value.trim();
+    }
+    // 文件夹统计三类单位同样 trim
+    if (
+      (key === "folderCountGroupUnit" || key === "folderCountLoreUnit" || key === "folderCountChapterUnit") &&
+      typeof value === "string"
+    ) {
+      value = value.trim();
+    }
     void super.setControlValue(key, value);
     // 网格线渲染依赖排版类（CSS 叠加类门控）：排版关闭时拒绝开启网格线并提示
     if (key === "novelGridlines" && value === true && !this.plugin.settings.novelTypeset) {
@@ -458,6 +560,21 @@ export class SettingsTab extends PluginSettingTab {
     // 仅网格线相关设置变更时刷新网格线类
     if (GRIDLINES_SETTING_KEYS.includes(key)) {
       refreshGridlines(this.plugin);
+    }
+    // 字数开关变更：刷新文件列表装饰，并联动文件夹刷新（正文目录字部分显隐）
+    if (WORD_COUNT_SETTING_KEYS.includes(key)) {
+      refreshWordCount(this.plugin);
+      refreshFolderCounts(this.plugin);
+    }
+    // 单位变更仅影响文案：重设已装饰标题的统计文本，装饰增删由 wordCount 门控处理
+    if (key === "wordCountUnit") {
+      refreshWordCountTexts(this.plugin);
+      // 正文目录总字数的「字」部分同样消费该单位
+      refreshFolderCounts(this.plugin);
+    }
+    // 仅文件夹统计相关设置变更时刷新文件夹装饰（角色/开关/单位/目录）
+    if (FOLDER_COUNT_SETTING_KEYS.includes(key)) {
+      refreshFolderCounts(this.plugin);
     }
   }
 }

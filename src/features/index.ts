@@ -2,6 +2,7 @@ import { initStructure } from "./structure";
 import { initTypeset } from "./typeset";
 import { initGridlines } from "./gridlines";
 import { initQuickMenu } from "./quick-menu";
+import { initWordCount } from "./word-count";
 import type NovelistsAssistantPlugin from "../main";
 
 /** 各 feature 注册的清理函数，cleanFeatures 在卸载时依序回收 */
@@ -17,6 +18,7 @@ export async function initFeatures(plugin: NovelistsAssistantPlugin): Promise<vo
   cleanups.push(initTypeset(plugin));
   cleanups.push(initGridlines(plugin));
   cleanups.push(initQuickMenu(plugin));
+  cleanups.push(initWordCount(plugin));
 }
 
 /** 卸载时依序回收各 feature 注册的资源（视图叶子等） */

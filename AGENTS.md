@@ -44,7 +44,8 @@
 │   │   ├── structure/       # 目录结构：默认目录创建与自动指向（说明见业务功能）
 │   │   ├── typeset/         # 排版：正文目录排版样式（说明见业务功能）
 │   │   ├── gridlines/       # 网格线：正文网格虚线（说明见业务功能）
-│   │   └── quick-menu/      # 快捷菜单：文件/编辑菜单事件（说明见业务功能）
+│   │   ├── quick-menu/      # 快捷菜单：文件/编辑菜单事件（说明见业务功能）
+│   │   └── word-count/      # 字数统计：文件列表字数显示（说明见业务功能）
 │   ├── utils/               # 无状态纯函数工具（如 svelte 组件挂载，说明见核心能力）
 │   └── main.ts              # 插件入口：仅调用 initCores()/initFeatures() 聚合初始化
 ├── .editorconfig            # 编辑器统一格式（与 .prettierrc 对齐）
@@ -132,6 +133,17 @@
 - 编辑菜单首个菜单项「添加到设定」：选中文本且 `loreDir` 已配置时出现，二级菜单列 `loreDir` 直接子文件夹（`submenu` 构建器）；`createLoreNote` 在所选目录创建以选中文本命名的空 .md 文件（仅 trim 不清洗，非法字符/超长由创建失败兜底），仓库内任何位置存在同名（basename 大小写不敏感）设定即跳过并提示，纯空白选中静默跳过，创建成功与失败均提示
 - 编辑菜单另两项「同步/清空所有设定链接」：未选中文本且 `loreDir` 已配置时出现；`wrapLoreNames` 单遍正则包裹——已有 wikilink 与 Markdown 内链（含别名/路径形式）整体跳过不重复包裹、名称按长度降序匹配，`unwrapLoreNames` 仅解除精确 `[[名称]]` 包裹（别名/路径链接不动），两者返回 `{ text, count }` 供 `getValue`/`setValue` 整体替换与提示（count>0 才落盘提示）
 - 依赖方向：值导入 i18n、仅 type-only 导入 main，无运行时循环
+
+### word-count（字数统计）
+
+- 三段式组织；core.ts 导出 `initWordCount(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`vault.on("modify"/"create"/"delete"/"rename")` 与 `layout-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
+- `WORD_COUNT_CLASS`/`PROCESSED_CLASS` 常量与 `FolderCountRole`（"loreGroups" | "loreNotes" | "chapters"）位于 types.ts；`PROCESSED_CLASS` 标记已装饰的 `.nav-file-title`/`.nav-folder-title`（文件仅 md），刷新扫描时跳过防重复追加；样式表以 `.nav-file-title > .novel-word-count, .nav-folder-title > .novel-word-count` 消费（`margin-left: auto` 靠右显示）
+- `stripMarkdown(text)` 清洗管线（顺序有依赖）：frontmatter/围栏代码块/行内代码/HTML 标签注释/Obsidian 行内注释/数学公式整体剔除，图片与嵌入整体剔除、链接与 wikilink 仅保留文字部分，标题/引用/列表行首标记、分隔线/表格分隔行、callout 类型标记、脚注、话题标签（负向后行断言防误伤 "C#语言"）、加粗/斜体/删除线/高亮标记、转义反斜杠剔除；`countWords(text)` 计数口径：CJK（汉字/假名/谚文）与全角字母数字逐字计 1，连续半角拉丁字母/数字序列（词内撇号/连字符不拆分）计 1，标点空白不计
+- 统计缓存 `Map<path, {mtime, count}>` 按 mtime 失效，经 `vault.cachedRead` 读取避免重复读盘；`refreshWordCount(plugin)` 开关开启时装饰全部未标记文件标题（span 文案异步填充），关闭时移除全部 span 与标记（幂等，重新开启后再次装饰）；modify 事件删除缓存并按路径定位元素即时更新文案
+- 文件夹统计：`resolveFolderRole` 判定角色——loreDir 自身（loreGroups）、novelDir 自身（chapters）、loreDir 直接子文件夹（loreNotes，相对路径不含 `/`）；精确匹配优先于子文件夹规则，防目录嵌套/相等时角色冲突；loreGroups 显示「递归设定总数 | 直接子文件夹组数」，chapters 显示「总字数 | 递归章节数」（wordCount 关闭时仅章节数），loreNotes 显示直接 md 文件数（非递归）；同步计数（children/getFiles 均在内存）由 `folderCountCache: Map<path, {role, count, total}>` 缓存（条目含角色，目录设置变更导致同路径角色变化时自愈失效，total 仅 loreGroups 使用），目录总字数经 `sumWordCounts` 复用 per-file 缓存求和——同一文件同一 mtime 只读一次内容，modify 仅重读被改文件；create/delete/rename 清缓存并复用 debounce 扫描（折叠文件夹无子节点 DOM 变更，MutationObserver 兜不住）；modify 事件对 novelDir 前缀内文件额外触发文件夹刷新；`refreshFolderCounts(plugin)` 开关开启时按角色装饰命中文件夹、不再命中的已装饰项移除残留，setText 前比对旧值防 DOM 抖动
+- 展示文案经 `formatCount(count, unit)` 拼接：单位非空时以空格分隔（如 "123 字"），为空时仅数字无空格，文件夹多段以 " | " 连接；单位值不国际化、设置层写入前 trim；`refreshWordCountTexts(plugin)` 重设已装饰标题文案（单位变更时调用，与 `refreshWordCount` 区分——后者跳过已处理项且被 MutationObserver 高频触发，全量重算浪费）
+- 文件树项渲染无现成事件：MutationObserver 监听主文档 body 子树（100ms debounce）捕获新增项，`layout-change` 兜底折叠/排序等重渲染，rename 仅清缓存由重扫描兜底；已知限制：弹窗窗口 DOM 不在主文档，其文件树不显示统计
+- 设置页「字数统计」分组含文件字数开关（默认开启）与单位输入框（默认「字」）、文件夹统计开关（默认开启）与三组单位输入框（默认「组」/「条」/「章」，开关关闭时隐藏，`UPDATE_SETTING_KEYS` 联动显隐），`setControlValue` 以 `WORD_COUNT_SETTING_KEYS` 门控装饰增删、`wordCount`/`wordCountUnit` 同时联动文件夹刷新（正文目录字部分消费二者）、`FOLDER_COUNT_SETTING_KEYS`（含 loreDir/novelDir）触发文件夹装饰刷新；依赖方向：settings 值导入本模块，本模块仅 type-only 导入 main，无运行时循环
 
 ## 代码规范
 

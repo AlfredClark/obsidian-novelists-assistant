@@ -30,4 +30,12 @@ export interface NovelistsAssistantSettings {
   /** 快捷菜单 */
   chapterFormat: string; // 自动编号章节格式，# 为编号占位（如 "第 # 章"）
   chapterNumberStyle: ChapterNumberStyle; // 章节自动编号样式：数字/中文小写/中文大写
+  /** 字数统计 */
+  wordCount: boolean; // 是否在文件列表为每个 md 文件显示字数统计
+  wordCountUnit: string; // 字数统计单位，空字符串表示不显示单位
+  /** 文件夹统计 */
+  folderCount: boolean; // 是否在文件列表为设定/正文文件夹显示统计
+  folderCountGroupUnit: string; // 设定文件夹的子文件夹数（组数）单位
+  folderCountLoreUnit: string; // 设定子文件夹的设定数单位
+  folderCountChapterUnit: string; // 正文文件夹的章节数单位
 }
