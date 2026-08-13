@@ -46,7 +46,7 @@
 
 ### 手动安装
 
-1. 从[最新发布](https://github.com/AlfredClark/obsidian-novelists-assistant/releases)下载 `novelists-assistant.zip` 并解压，或直接下载 `main.js`、`manifest.json`、`styles.css`
+1. 从[最新发布](https://github.com/AlfredClark/obsidian-novelists-assistant/releases)下载 `main.js`、`manifest.json`、`styles.css`
 2. 放入 `Vault/.obsidian/plugins/novelists-assistant/`
 
 ## 设置

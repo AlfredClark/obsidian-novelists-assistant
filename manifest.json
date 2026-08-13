@@ -3,8 +3,8 @@
   "name": "Novelists Assistant",
   "version": "0.1.0",
   "minAppVersion": "1.13.1",
-  "description": "Enhance your novel writing experience with various writing tools to keep complex storylines organized",
+  "description": "Enhance your novel writing experience with various writing tools to keep complex storylines organized.",
   "isDesktopOnly": true,
   "author": "Alfred Clark",
-  "authorUrl": "https://github.com/AlfredClark/obsidian-novelists-assistant"
+  "authorUrl": "https://github.com/AlfredClark"
 }

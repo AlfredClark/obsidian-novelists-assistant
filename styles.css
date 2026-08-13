@@ -47,11 +47,6 @@
   margin: 0;
 }
 
-/* 纯空段（仅 <br>）作为分段空隙保留高度，不缩进 */
-.workspace-leaf-content[data-mode="preview"] .markdown-preview-view .el-p div.novel-preview:has(> br:only-child) {
-  text-indent: 0;
-}
-
 .nav-file-title > .novel-word-count,
 .nav-folder-title > .novel-word-count {
   margin-left: auto;

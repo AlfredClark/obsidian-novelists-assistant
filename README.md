@@ -46,7 +46,7 @@ Enhance your novel writing experience with various writing tools to keep complex
 
 ### Manual
 
-1. Download `novelists-assistant.zip` from the [latest release](https://github.com/AlfredClark/obsidian-novelists-assistant/releases) and extract it, or download `main.js`, `manifest.json`, and `styles.css` directly
+1. From [latest release](https://github.com/AlfredClark/obsidian-novelists-assistant/releases) download `main.js`, `manifest.json`, and `styles.css` directly
 2. Place the files into `Vault/.obsidian/plugins/novelists-assistant/`
 
 ## Settings

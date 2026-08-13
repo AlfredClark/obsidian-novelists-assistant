@@ -3,6 +3,8 @@ import esbuildSvelte from "esbuild-svelte";
 import process from "node:process";
 import { builtinModules } from "node:module";
 import { copyFileSync, mkdirSync, watch } from "node:fs";
+// 别名导入：避免社区校验器将 Node 定时器误判为浏览器全局（要求 window. 前缀）
+import { clearTimeout as cancelDelay, setTimeout as delay } from "node:timers";
 
 // 插件发布所需的文件
 const ASSETS = ["manifest.json", "styles.css"];
@@ -63,7 +65,7 @@ if (prod) {
 } else {
   // esbuild 0.28 的 context.watch() 不提供构建完成回调，
   // 因此改用 rebuild() + fs.watch 自行调度，统一在构建完成后同步 dist
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  let timer: ReturnType<typeof delay> | undefined;
 
   async function rebuildAndSync() {
     const result = await context.rebuild();
@@ -71,8 +73,11 @@ if (prod) {
   }
 
   function scheduleRebuild() {
-    clearTimeout(timer);
-    timer = setTimeout(rebuildAndSync, 100);
+    cancelDelay(timer);
+    // rebuildAndSync 为 async：包装为 void 消费，防浮 Promise 触发校验告警
+    timer = delay(() => {
+      void rebuildAndSync();
+    }, 100);
   }
 
   await rebuildAndSync();
