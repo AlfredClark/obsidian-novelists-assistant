@@ -16,6 +16,7 @@ Enhance your novel writing experience with various writing tools to keep complex
 ### Novel typesetting
 
 - First-line indent and line height for files in the novel folder, in both source and reading (preview) view
+- Font family and font weight (100–900) are configurable separately for source and reading views; an empty font family inherits the theme font
 - Reading view has an independent toggle and parameters; soft line breaks render as independently indented lines
 
 ### Grid lines
