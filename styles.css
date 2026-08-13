@@ -1,8 +1,12 @@
 :root {
   --novel-text-indent: 2rem;
   --novel-line-height: 1.75rem;
+  --novel-font-family: inherit;
+  --novel-font-weight: inherit;
   --novel-preview-text-indent: 2rem;
   --novel-preview-line-height: 1.75rem;
+  --novel-preview-font-family: inherit;
+  --novel-preview-font-weight: inherit;
   --novel-gridlines-size: 5px;
   --novel-gridlines-space: 5px;
   --novel-gridlines-thick: 1px;
@@ -13,6 +17,8 @@
   position: relative;
   text-indent: var(--novel-text-indent, 2rem);
   line-height: var(--novel-line-height, 2rem);
+  font-family: var(--novel-font-family), serif;
+  font-weight: var(--novel-font-weight);
 }
 
 .workspace-leaf-content[data-mode="source"] .cm-content.novel-typeset.novel-gridlines::before {
@@ -41,6 +47,8 @@
 .workspace-leaf-content[data-mode="preview"] .markdown-preview-view .el-p div.novel-preview {
   text-indent: var(--novel-preview-text-indent, 2rem);
   line-height: var(--novel-preview-line-height, 2rem);
+  font-family: var(--novel-preview-font-family), serif;
+  font-weight: var(--novel-preview-font-weight, inherit);
 }
 
 .workspace-leaf-content[data-mode="preview"] .markdown-preview-view .el-p div.novel-preview p {

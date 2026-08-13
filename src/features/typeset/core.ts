@@ -1,11 +1,15 @@
 import type { MarkdownPostProcessorContext, WorkspaceLeaf } from "obsidian";
 import { MarkdownView } from "obsidian";
-import type { PreviewTransform } from "./types";
+import type { PreviewTransform, TypesetStyle } from "./types";
 import {
   PREVIEW_CLASS,
+  PREVIEW_FONT_FAMILY_VAR,
+  PREVIEW_FONT_WEIGHT_VAR,
   PREVIEW_LINE_HEIGHT_VAR,
   PREVIEW_TEXT_INDENT_VAR,
   TYPESET_CLASS,
+  TYPESET_FONT_FAMILY_VAR,
+  TYPESET_FONT_WEIGHT_VAR,
   TYPESET_LINE_HEIGHT_VAR,
   TYPESET_TEXT_INDENT_VAR,
 } from "./types";
@@ -29,82 +33,80 @@ function getPreviewTargetElement(leaf: WorkspaceLeaf): HTMLElement | null {
   );
 }
 
-/** 按门控条件为排版目标元素增删排版类与缩进/行高变量（toggle 布尔版幂等）；变量名由调用方指定，源码/阅读视图各自消费 */
-function applyTypeset(
-  element: HTMLElement | null,
-  enabled: boolean,
-  indentVar: string,
-  indent: string,
-  validIndent: boolean,
-  lineHeightVar: string,
-  lineHeight: string,
-  validLineHeight: boolean,
-): void {
+/** 按门控条件为排版目标元素增删排版类与各样式变量（toggle 布尔版幂等）；变量名由调用方指定，源码/阅读视图各自消费 */
+function applyTypeset(element: HTMLElement | null, style: TypesetStyle): void {
   if (!element) return;
-  element.classList.toggle(TYPESET_CLASS, enabled);
-  if (enabled && validIndent) {
-    element.style.setProperty(indentVar, indent);
-  } else {
-    element.style.removeProperty(indentVar);
-  }
-  if (enabled && validLineHeight) {
-    element.style.setProperty(lineHeightVar, lineHeight);
-  } else {
-    element.style.removeProperty(lineHeightVar);
-  }
+  element.classList.toggle(TYPESET_CLASS, style.enabled);
+  style.entries.forEach((entry) => {
+    if (style.enabled && entry.valid) {
+      element.style.setProperty(entry.variable, entry.value);
+    } else {
+      element.style.removeProperty(entry.variable);
+    }
+  });
 }
 
-/** 按文件所在目录与各视图排版开关增删排版类与缩进变量：正文目录内的文件加类，其余移除 */
+/** 按文件所在目录与各视图排版开关增删排版类与样式变量：正文目录内的文件加类，其余移除 */
 export function refreshTypeset(plugin: NovelistsAssistantPlugin): void {
   const novelDir = plugin.settings.novelDir;
-  // 滑块值拼接 rem 后校验，防御 data.json 手改脏值；非法时回退样式表 var() 默认值
+  // 参数值拼接单位/trim 后校验，防御 data.json 手改脏值；非法时回退样式表 var() 默认值
   const indent = `${plugin.settings.novelIndent}rem`;
   const validIndent = CSS.supports("text-indent", indent);
   const lineHeight = `${plugin.settings.novelLineHeight}rem`;
   const validLineHeight = CSS.supports("line-height", lineHeight);
+  const fontFamily = plugin.settings.novelFontFamily.trim();
+  const validFontFamily = fontFamily !== "" && CSS.supports("font-family", fontFamily);
+  const fontWeight = `${plugin.settings.novelFontWeight}`;
+  const validFontWeight = CSS.supports("font-weight", fontWeight);
   const previewIndent = `${plugin.settings.novelPreviewIndent}rem`;
   const validPreviewIndent = CSS.supports("text-indent", previewIndent);
   const previewLineHeight = `${plugin.settings.novelPreviewLineHeight}rem`;
   const validPreviewLineHeight = CSS.supports("line-height", previewLineHeight);
+  const previewFontFamily = plugin.settings.novelPreviewFontFamily.trim();
+  const validPreviewFontFamily = previewFontFamily !== "" && CSS.supports("font-family", previewFontFamily);
+  const previewFontWeight = `${plugin.settings.novelPreviewFontWeight}`;
+  const validPreviewFontWeight = CSS.supports("font-weight", previewFontWeight);
   // iterateAllLeaves 覆盖弹窗窗口，getLeavesOfType 只能取主窗口叶子
   plugin.app.workspace.iterateAllLeaves((leaf) => {
     if (!(leaf.view instanceof MarkdownView)) return;
     // 正文判定与视图开关分离：源码/阅读视图各由独立开关与参数门控
     const inNovelDir = novelDir !== "" && leaf.view.file !== null && isInside(leaf.view.file.path, novelDir);
-    applyTypeset(
-      getTargetElement(leaf),
-      plugin.settings.novelTypeset && inNovelDir,
-      TYPESET_TEXT_INDENT_VAR,
-      indent,
-      validIndent,
-      TYPESET_LINE_HEIGHT_VAR,
-      lineHeight,
-      validLineHeight,
-    );
-    applyTypeset(
-      getPreviewTargetElement(leaf),
-      plugin.settings.novelPreviewTypeset && inNovelDir,
-      PREVIEW_TEXT_INDENT_VAR,
-      previewIndent,
-      validPreviewIndent,
-      PREVIEW_LINE_HEIGHT_VAR,
-      previewLineHeight,
-      validPreviewLineHeight,
-    );
+    applyTypeset(getTargetElement(leaf), {
+      enabled: plugin.settings.novelTypeset && inNovelDir,
+      entries: [
+        { variable: TYPESET_TEXT_INDENT_VAR, value: indent, valid: validIndent },
+        { variable: TYPESET_LINE_HEIGHT_VAR, value: lineHeight, valid: validLineHeight },
+        { variable: TYPESET_FONT_FAMILY_VAR, value: fontFamily, valid: validFontFamily },
+        { variable: TYPESET_FONT_WEIGHT_VAR, value: fontWeight, valid: validFontWeight },
+      ],
+    });
+    applyTypeset(getPreviewTargetElement(leaf), {
+      enabled: plugin.settings.novelPreviewTypeset && inNovelDir,
+      entries: [
+        { variable: PREVIEW_TEXT_INDENT_VAR, value: previewIndent, valid: validPreviewIndent },
+        { variable: PREVIEW_LINE_HEIGHT_VAR, value: previewLineHeight, valid: validPreviewLineHeight },
+        { variable: PREVIEW_FONT_FAMILY_VAR, value: previewFontFamily, valid: validPreviewFontFamily },
+        { variable: PREVIEW_FONT_WEIGHT_VAR, value: previewFontWeight, valid: validPreviewFontWeight },
+      ],
+    });
   });
 }
 
-/** 卸载时移除全部叶子上的排版类与缩进/行高变量，避免残留影响非正文文件 */
+/** 卸载时移除全部叶子上的排版类与样式变量，避免残留影响非正文文件 */
 function removeAllTypeset(plugin: NovelistsAssistantPlugin): void {
   plugin.app.workspace.iterateAllLeaves((leaf) => {
     const source = getTargetElement(leaf);
     source?.classList.remove(TYPESET_CLASS);
     source?.style.removeProperty(TYPESET_TEXT_INDENT_VAR);
     source?.style.removeProperty(TYPESET_LINE_HEIGHT_VAR);
+    source?.style.removeProperty(TYPESET_FONT_FAMILY_VAR);
+    source?.style.removeProperty(TYPESET_FONT_WEIGHT_VAR);
     const preview = getPreviewTargetElement(leaf);
     preview?.classList.remove(TYPESET_CLASS);
     preview?.style.removeProperty(PREVIEW_TEXT_INDENT_VAR);
     preview?.style.removeProperty(PREVIEW_LINE_HEIGHT_VAR);
+    preview?.style.removeProperty(PREVIEW_FONT_FAMILY_VAR);
+    preview?.style.removeProperty(PREVIEW_FONT_WEIGHT_VAR);
   });
 }
 

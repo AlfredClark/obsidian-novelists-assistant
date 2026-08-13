@@ -18,6 +18,10 @@ const TYPESET_SETTING_KEYS: readonly string[] = [
   "novelLineHeight",
   "novelPreviewIndent",
   "novelPreviewLineHeight",
+  "novelFontFamily",
+  "novelFontWeight",
+  "novelPreviewFontFamily",
+  "novelPreviewFontWeight",
 ];
 
 /** 影响网格线效果的设置键，变更时须刷新网格线类 */
@@ -66,6 +70,10 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   novelPreviewTypeset: true,
   novelPreviewIndent: 2,
   novelPreviewLineHeight: 1.75,
+  novelFontFamily: "",
+  novelFontWeight: 400,
+  novelPreviewFontFamily: "",
+  novelPreviewFontWeight: 400,
   novelGridlines: false,
   novelGridlinesSize: 5,
   novelGridlinesSpace: 5,
@@ -255,6 +263,30 @@ export class SettingsTab extends PluginSettingTab {
         },
       },
       {
+        name: t("settings.novelFontFamily"),
+        desc: t("settings.novelFontFamilyDesc"),
+        visible: () => this.plugin.settings.novelTypeset,
+        control: {
+          type: "text",
+          key: "novelFontFamily",
+          defaultValue: "",
+          placeholder: t("settings.novelFontFamilyPlaceholder"),
+        },
+      },
+      {
+        name: t("settings.novelFontWeight"),
+        desc: t("settings.novelFontWeightDesc"),
+        visible: () => this.plugin.settings.novelTypeset,
+        control: {
+          type: "slider",
+          key: "novelFontWeight",
+          defaultValue: 400,
+          min: 100,
+          max: 900,
+          step: 100,
+        },
+      },
+      {
         name: t("settings.novelPreviewTypeset"),
         desc: t("settings.novelPreviewTypesetDesc"),
         control: {
@@ -287,6 +319,30 @@ export class SettingsTab extends PluginSettingTab {
           min: 1,
           max: 2.5,
           step: 0.25,
+        },
+      },
+      {
+        name: t("settings.novelPreviewFontFamily"),
+        desc: t("settings.novelPreviewFontFamilyDesc"),
+        visible: () => this.plugin.settings.novelPreviewTypeset,
+        control: {
+          type: "text",
+          key: "novelPreviewFontFamily",
+          defaultValue: "",
+          placeholder: t("settings.novelPreviewFontFamilyPlaceholder"),
+        },
+      },
+      {
+        name: t("settings.novelPreviewFontWeight"),
+        desc: t("settings.novelPreviewFontWeightDesc"),
+        visible: () => this.plugin.settings.novelPreviewTypeset,
+        control: {
+          type: "slider",
+          key: "novelPreviewFontWeight",
+          defaultValue: 400,
+          min: 100,
+          max: 900,
+          step: 100,
         },
       },
     ];
@@ -533,6 +589,10 @@ export class SettingsTab extends PluginSettingTab {
       (key === "folderCountGroupUnit" || key === "folderCountLoreUnit" || key === "folderCountChapterUnit") &&
       typeof value === "string"
     ) {
+      value = value.trim();
+    }
+    // 字体名同样 trim，防手输首尾空格进入 CSS 变量
+    if ((key === "novelFontFamily" || key === "novelPreviewFontFamily") && typeof value === "string") {
       value = value.trim();
     }
     void super.setControlValue(key, value);

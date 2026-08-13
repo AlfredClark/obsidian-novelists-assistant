@@ -21,6 +21,10 @@ export interface NovelistsAssistantSettings {
   novelPreviewTypeset: boolean; // 是否在阅读视图对正文目录内的文件应用排版样式
   novelPreviewIndent: number; // 阅读视图首行缩进大小（rem，0 表示不缩进）
   novelPreviewLineHeight: number; // 阅读视图行高（rem）
+  novelFontFamily: string; // 正文字体（CSS font-family 值），空字符串表示继承主题字体
+  novelFontWeight: number; // 正文字体粗细（100-900）
+  novelPreviewFontFamily: string; // 阅读视图字体（CSS font-family 值），空字符串表示继承主题字体
+  novelPreviewFontWeight: number; // 阅读视图字体粗细（100-900）
   /** 网格线 */
   novelGridlines: boolean; // 是否对正文目录内的文件显示网格虚线
   novelGridlinesSize: number; // 网格虚线长度（px）
