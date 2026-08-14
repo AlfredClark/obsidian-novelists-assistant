@@ -141,8 +141,9 @@
 - 核心机制为 `EditorState.transactionFilter`（@codemirror/state）：改写文本输入事务，天然兼容中文输入法——IME 提交的字符同为 `input.type` 事务，无需处理 beforeinput 与 composition 竞态；开关经闭包实时读取 `plugin.settings.punctuationComplete`，切换即时生效无需重注册
 - `PUNCT_PAIRS` 常量位于 types.ts：中英文全包含（半角 `()[]{}<>`、全角 `（）【】《》〈〉「」『』〔〕［］｛｝＜＞`、中文引号 `“”‘’`）；英文引号 `"`/`'` 不收录——Obsidian 内置 closeBrackets 已处理，且 `'` 会干扰撇号输入；`<>` 在 Markdown 中形成空 HTML 标签但浏览器按纯文本渲染，无实际影响；内置 closeBrackets 产出的双字符事务被多字符检查天然跳过，不重复配对
 - 事务过滤器四个行为（全部经用户事件门控）：配对插入（单字符左标点 → 插「左+右」光标居中）、选区包裹（有选区时插「左+选中文本+右」光标在闭合符前）、跳过右标点（光标后紧邻同字符时不重复插入仅前移光标，多光标逐区间处理）、退格删空对（`delete.backward` + 空选区 + 光标两侧为成对标点 → 一次删除整对）
+- IME 候选替换修复：fcitx5 等输入法的标点候选流程会先提交默认左标点（被自动补齐）再在光标处提交选中候选，导致候选被默认标点包裹（`【`+选 `「` → `【「】`）；配对插入分支在时间窗内遇到紧邻最近空对的左标点插入（或改动区间恰好覆盖该空对左标点的替换）时，整对替换为新标点对（`【】`+`「` → `「」`）；时间窗由设置项 `punctuationRepairInterval` 控制（毫秒，0 禁用修复，脏值回退 `DEFAULT_REPAIR_WINDOW_MS`）；空对记录 `RECENT_PAIRS` 随创建登记、命中消费、超时修剪，位置+字符双校验防误命中——已知取舍：时间窗内紧邻连续输入两个左标点的正常嵌套（如 `《` 后立即 `“`）会误判为替换
 - 上下文排除：`syntaxTree(state).resolveInner(pos, 1)` + `tokenClassNodeProp` 匹配 `/frontmatter|code|math|templater|hashtag/`（token 类由 Obsidian 的 markdown 语言注入，与 typographer 插件同款）——代码块/公式/frontmatter 内不配对、不跳过、不包裹；退格删对不做上下文检查（手动键入的对删除是预期行为）
-- 依赖方向：无——开关运行时机读，settings 无需导入本模块刷新，无运行时循环；仅 type-only 导入 main；`@codemirror/language`/`@codemirror/state` 为 devDependencies（仅类型检查用，运行时由 Obsidian 提供，esbuild 外部化）
+- 依赖方向：无——开关与候选间隔均运行时机读，settings 无需导入本模块刷新，无运行时循环；仅 type-only 导入 main；`@codemirror/language`/`@codemirror/state` 为 devDependencies（仅类型检查用，运行时由 Obsidian 提供，esbuild 外部化）
 
 ### word-count（字数统计）
 

@@ -86,6 +86,9 @@ export const zh: TranslationResource = {
     punctuationComplete: "标点补齐",
     punctuationCompleteDesc: "输入左标点（如 ( [ < 《 （ 「 【 等）时自动补全对应的右标点",
     punctuationDesc: "配置成对标点符号的自动补齐",
+    punctuationRepairInterval: "候选间隔",
+    punctuationRepairIntervalDesc:
+      "输入法提交默认左标点后，在此间隔（毫秒）内提交的新标点视为候选替换，整对替换为新标点对；0 表示禁用修复",
     quickMenu: "快捷菜单",
     quickMenuDesc: "配置添加到文件与编辑菜单中的菜单项",
     typeset: "排版设置",
@@ -204,6 +207,9 @@ export const zhTW: TranslationResource = {
     punctuationComplete: "標點補齊",
     punctuationCompleteDesc: "輸入左標點（如 ( [ < 《 （ 「 【 等）時自動補全對應的右標點",
     punctuationDesc: "設定成對標點符號的自動補齊",
+    punctuationRepairInterval: "候選間隔",
+    punctuationRepairIntervalDesc:
+      "輸入法提交預設左標點後，在此間隔（毫秒）內提交的新標點視為候選替換，整對替換為新標點對；0 表示停用修復",
     quickMenu: "快捷選單",
     quickMenuDesc: "設定新增到檔案與編輯選單中的選單項目",
     typeset: "排版設定",

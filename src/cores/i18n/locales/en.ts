@@ -86,6 +86,9 @@ const en = {
     punctuationCompleteDesc:
       "Automatically insert the matching closing mark when typing an opening mark (e.g. ( [ < 《 （ 「 【)",
     punctuationDesc: "Configure automatic completion of paired punctuation marks",
+    punctuationRepairInterval: "Candidate interval",
+    punctuationRepairIntervalDesc:
+      "When an input method submits the default opening mark followed by the selected candidate within this interval (ms), the pair is replaced with the candidate pair; 0 disables the repair",
     quickMenu: "Quick menu",
     quickMenuDesc: "Configure menu items added to the file and editor menus",
     typeset: "Typesetting",

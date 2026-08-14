@@ -82,6 +82,7 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   chapterFormat: "第 # 章",
   chapterNumberStyle: "digit",
   punctuationComplete: true,
+  punctuationRepairInterval: 3000,
   wordCount: true,
   wordCountUnit: "字",
   folderCount: true,
@@ -482,6 +483,18 @@ export class SettingsTab extends PluginSettingTab {
           type: "toggle",
           key: "punctuationComplete",
           defaultValue: true,
+        },
+      },
+      {
+        name: t("settings.punctuationRepairInterval"),
+        desc: t("settings.punctuationRepairIntervalDesc"),
+        visible: () => this.plugin.settings.punctuationComplete,
+        control: {
+          type: "number",
+          key: "punctuationRepairInterval",
+          defaultValue: 3000,
+          min: 0,
+          step: 100,
         },
       },
     ];
