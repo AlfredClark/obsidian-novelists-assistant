@@ -81,6 +81,11 @@ const en = {
     novelPreviewFontWeightDesc: "Font weight for novel files in reading view (100-900)",
     novelGridlines: "Grid lines",
     novelGridlinesDesc: "Show grid lines under each line in novel files",
+    punctuation: "Punctuation",
+    punctuationComplete: "Auto-complete punctuation",
+    punctuationCompleteDesc:
+      "Automatically insert the matching closing mark when typing an opening mark (e.g. ( [ < 《 （ 「 【)",
+    punctuationDesc: "Configure automatic completion of paired punctuation marks",
     quickMenu: "Quick menu",
     quickMenuDesc: "Configure menu items added to the file and editor menus",
     typeset: "Typesetting",

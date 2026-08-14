@@ -45,6 +45,7 @@
 │   │   ├── typeset/         # 排版：正文目录排版样式（说明见业务功能）
 │   │   ├── gridlines/       # 网格线：正文网格虚线（说明见业务功能）
 │   │   ├── quick-menu/      # 快捷菜单：文件/编辑菜单事件（说明见业务功能）
+│   │   ├── punctuation/     # 标点：输入左标点自动补齐右标点（说明见业务功能）
 │   │   └── word-count/      # 字数统计：文件列表与状态栏字数显示（说明见业务功能）
 │   ├── utils/               # 无状态纯函数工具（如 svelte 组件挂载，说明见核心能力）
 │   └── main.ts              # 插件入口：仅调用 initCores()/initFeatures() 聚合初始化
@@ -133,6 +134,15 @@
 - 编辑菜单首个菜单项「添加到设定」：选中文本且 `loreDir` 已配置时出现，二级菜单列 `loreDir` 直接子文件夹（`submenu` 构建器）；`createLoreNote` 在所选目录创建以选中文本命名的空 .md 文件（仅 trim 不清洗，非法字符/超长由创建失败兜底），仓库内任何位置存在同名（basename 大小写不敏感）设定即跳过并提示，纯空白选中静默跳过，创建成功与失败均提示
 - 编辑菜单另两项「同步/清空所有设定链接」：未选中文本且 `loreDir` 已配置时出现；`wrapLoreNames` 单遍正则包裹——已有 wikilink 与 Markdown 内链（含别名/路径形式）整体跳过不重复包裹、名称按长度降序匹配，`unwrapLoreNames` 仅解除精确 `[[名称]]` 包裹（别名/路径链接不动），两者返回 `{ text, count }` 供 `getValue`/`setValue` 整体替换与提示（count>0 才落盘提示）
 - 依赖方向：值导入 i18n、仅 type-only 导入 main，无运行时循环
+
+### punctuation（标点）
+
+- 三段式组织；core.ts 导出 `initPunctuation(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；扩展经 `plugin.registerEditorExtension` 注册，Obsidian 卸载自动回收，清理函数为空操作（扩展生命周期由 Obsidian 管理）
+- 核心机制为 `EditorState.transactionFilter`（@codemirror/state）：改写文本输入事务，天然兼容中文输入法——IME 提交的字符同为 `input.type` 事务，无需处理 beforeinput 与 composition 竞态；开关经闭包实时读取 `plugin.settings.punctuationComplete`，切换即时生效无需重注册
+- `PUNCT_PAIRS` 常量位于 types.ts：中英文全包含（半角 `()[]{}<>`、全角 `（）【】《》〈〉「」『』〔〕［］｛｝＜＞`、中文引号 `“”‘’`）；英文引号 `"`/`'` 不收录——Obsidian 内置 closeBrackets 已处理，且 `'` 会干扰撇号输入；`<>` 在 Markdown 中形成空 HTML 标签但浏览器按纯文本渲染，无实际影响；内置 closeBrackets 产出的双字符事务被多字符检查天然跳过，不重复配对
+- 事务过滤器四个行为（全部经用户事件门控）：配对插入（单字符左标点 → 插「左+右」光标居中）、选区包裹（有选区时插「左+选中文本+右」光标在闭合符前）、跳过右标点（光标后紧邻同字符时不重复插入仅前移光标，多光标逐区间处理）、退格删空对（`delete.backward` + 空选区 + 光标两侧为成对标点 → 一次删除整对）
+- 上下文排除：`syntaxTree(state).resolveInner(pos, 1)` + `tokenClassNodeProp` 匹配 `/frontmatter|code|math|templater|hashtag/`（token 类由 Obsidian 的 markdown 语言注入，与 typographer 插件同款）——代码块/公式/frontmatter 内不配对、不跳过、不包裹；退格删对不做上下文检查（手动键入的对删除是预期行为）
+- 依赖方向：无——开关运行时机读，settings 无需导入本模块刷新，无运行时循环；仅 type-only 导入 main；`@codemirror/language`/`@codemirror/state` 为 devDependencies（仅类型检查用，运行时由 Obsidian 提供，esbuild 外部化）
 
 ### word-count（字数统计）
 

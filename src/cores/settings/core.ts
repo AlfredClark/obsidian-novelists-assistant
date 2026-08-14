@@ -81,6 +81,7 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   novelGridlinesOpacity: 75,
   chapterFormat: "第 # 章",
   chapterNumberStyle: "digit",
+  punctuationComplete: true,
   wordCount: true,
   wordCountUnit: "字",
   folderCount: true,
@@ -163,6 +164,7 @@ export class SettingsTab extends PluginSettingTab {
       this.buildCollapsibleSection(t("settings.typeset"), t("settings.typesetDesc"), this.getTypesetItems()),
       this.buildCollapsibleSection(t("settings.gridlines"), t("settings.gridlinesDesc"), this.getGridlinesItems()),
       this.buildCollapsibleSection(t("settings.quickMenu"), t("settings.quickMenuDesc"), this.getQuickMenuItems()),
+      this.buildCollapsibleSection(t("settings.punctuation"), t("settings.punctuationDesc"), this.getPunctuationItems()),
       this.buildCollapsibleSection(t("settings.wordCount"), t("settings.wordCountDesc"), this.getWordCountItems()),
     ];
   }
@@ -462,6 +464,24 @@ export class SettingsTab extends PluginSettingTab {
               void this.handleChapterConvert(input?.getValue() ?? "");
             }),
           );
+        },
+      },
+    ];
+  }
+
+  /**
+   * 标点设置条目：标点补齐开关。
+   * 与其他可折叠分组共用条目结构，容器形态由 collapsible 决定。
+   */
+  private getPunctuationItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
+    return [
+      {
+        name: t("settings.punctuationComplete"),
+        desc: t("settings.punctuationCompleteDesc"),
+        control: {
+          type: "toggle",
+          key: "punctuationComplete",
+          defaultValue: true,
         },
       },
     ];

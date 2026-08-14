@@ -34,6 +34,8 @@ export interface NovelistsAssistantSettings {
   /** 快捷菜单 */
   chapterFormat: string; // 自动编号章节格式，# 为编号占位（如 "第 # 章"）
   chapterNumberStyle: ChapterNumberStyle; // 章节自动编号样式：数字/中文小写/中文大写
+  /** 标点设置 */
+  punctuationComplete: boolean; // 是否在输入左标点时自动补全右标点
   /** 字数统计 */
   wordCount: boolean; // 是否在文件列表为每个 md 文件显示字数统计
   wordCountUnit: string; // 字数统计单位，空字符串表示不显示单位

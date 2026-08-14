@@ -31,6 +31,8 @@
     "unlink": "bun scripts/unlink-dist.ts"
   },
   "devDependencies": {
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/state": "^6.7.1",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.2.0",
     "esbuild": "^0.28.2",
