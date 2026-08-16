@@ -10,6 +10,13 @@ const OPEN_TO_CLOSE = new Map(PUNCT_PAIRS);
 /** 全部右标点集合，跳过右标点查表用 */
 const CLOSE_MARKS = new Set(PUNCT_PAIRS.map(([, close]) => close));
 
+/** 中文弯引号的右标点 → 左标点映射：IME 的开关状态在自动补齐后脱同步，光标移出引号对
+ * 后再次输入常为多余的右标点，此映射用于识别并改写为新开一对 */
+const CLOSE_TO_OPEN = new Map([
+  ["”", "“"],
+  ["’", "‘"],
+]);
+
 /** 不补齐的上下文：代码块/公式/frontmatter 等，token 类由 Obsidian 的 markdown 语言注入 */
 const IGNORED_CONTEXT = /frontmatter|code|math|templater|hashtag/;
 
@@ -87,6 +94,30 @@ function isIgnoredContext(state: EditorState, pos: number): boolean {
   return props !== undefined && IGNORED_CONTEXT.test(props);
 }
 
+/**
+ * 统计 pos 之前当前段落内未闭合的指定引号数量：段落以最近空行（或文档起点）为界，
+ * 连续非空行视为同一段，避免跨段计数串扰。
+ * 已知限制：段落内跨越代码围栏时围栏内引号会被计入（正文场景罕见，接受取舍）。
+ * @param doc 文档
+ * @param pos 光标位置
+ * @param open 开引号
+ * @param close 闭引号
+ */
+function countPendingQuote(doc: Text, pos: number, open: string, close: string): number {
+  const line = doc.lineAt(pos);
+  let start = line.from;
+  for (let n = line.number - 1; n >= 1; n--) {
+    if (doc.line(n).length === 0) break;
+    start = doc.line(n).from;
+  }
+  let pending = 0;
+  for (const ch of doc.sliceString(start, pos)) {
+    if (ch === open) pending++;
+    else if (ch === close) pending--;
+  }
+  return pending;
+}
+
 /** 文本输入事务的逐改动区间分析结果：改动按原始位置改写，光标按改动后的新位置计算 */
 interface ChangeAnalysis {
   /** 改写后的改动序列，未命中的区间原样保留 */
@@ -151,6 +182,19 @@ function analyzeTyping(tr: Transaction, windowMs: number): ChangeAnalysis {
       heads.push(fromNew + 1);
       modified = true;
       return;
+    }
+    // 弯引号新开一对：IME 的开关状态在自动补齐后脱同步，光标位于已闭合引号对之外或换行后
+    // 输入时补交的常为右标点；当前段落内无未闭合的对应开引号即视为新开一对，改写为「左+右」
+    // 光标居中（负值仅出现在段落开头即右标点的脏文本，同样改写兜底）
+    if (from === to) {
+      const open = CLOSE_TO_OPEN.get(text);
+      if (open !== undefined && countPendingQuote(tr.startState.doc, from, open, text) <= 0) {
+        changes.push({ from, to, insert: open + text });
+        heads.push(fromNew + 1);
+        recordPair(fromNew, open, text, windowMs);
+        modified = true;
+        return;
+      }
     }
     changes.push({ from, to, insert: inserted });
     heads.push(toNew);
