@@ -15,6 +15,27 @@ const LOCALES: Record<SupportedLanguage, TranslationResource> = {
 // 设置页 update() 重渲染后文本即自动切换，无需缓存与事件通知
 let pluginRef: NovelistsAssistantPlugin | null = null;
 
+/** 语言变更订阅回调集合；语言切换时通知依赖 t() 的非设置页 UI（如侧边栏）重建文案 */
+const languageListeners = new Set<() => void>();
+
+/**
+ * 订阅语言变更。语言切换仅发生在设置页 language 下拉（settings 层写入后广播），
+ * 订阅方在回调中刷新依赖 t() 的界面（Svelte 组件经 #key 强制重建）。
+ * @param listener 语言变更回调
+ * @returns 取消订阅函数
+ */
+export function subscribeLanguageChange(listener: () => void): () => void {
+  languageListeners.add(listener);
+  return () => {
+    languageListeners.delete(listener);
+  };
+}
+
+/** 广播语言变更。由 settings 模块在 language 设置写入后调用 */
+export function notifyLanguageChange(): void {
+  languageListeners.forEach((listener) => listener());
+}
+
 /**
  * 初始化 i18n 模块。必须在 initSettings 之前调用：
  * initSettings 内部的 addSettingTab() 会同步触发设置页渲染（getSettingDefinitions → t()），

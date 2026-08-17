@@ -119,6 +119,18 @@ const en = {
     syncLoreLinks: "Sync all lore links",
     syncResult: "Synced {count} lore links",
   },
+  sidebar: {
+    tabs: {
+      page1: "Page 1",
+      page2: "Page 2",
+      page3: "Page 3",
+    },
+    placeholders: {
+      page1: "Page 1 placeholder",
+      page2: "Page 2 placeholder",
+      page3: "Page 3 placeholder",
+    },
+  },
 } as const;
 
 export default en;

@@ -119,6 +119,18 @@ export const zh: TranslationResource = {
     syncLoreLinks: "同步所有设定链接",
     syncResult: "已同步 {count} 处设定链接",
   },
+  sidebar: {
+    tabs: {
+      page1: "页面 1",
+      page2: "页面 2",
+      page3: "页面 3",
+    },
+    placeholders: {
+      page1: "页面 1 占位文本",
+      page2: "页面 2 占位文本",
+      page3: "页面 3 占位文本",
+    },
+  },
 };
 
 /** 繁体中文资源。标注 TranslationResource 强制与英文同构，键缺失或多余都会编译报错 */
@@ -239,5 +251,17 @@ export const zhTW: TranslationResource = {
     newChapter: "新建章節",
     syncLoreLinks: "同步所有設定連結",
     syncResult: "已同步 {count} 處設定連結",
+  },
+  sidebar: {
+    tabs: {
+      page1: "頁面 1",
+      page2: "頁面 2",
+      page3: "頁面 3",
+    },
+    placeholders: {
+      page1: "頁面 1 佔位文字",
+      page2: "頁面 2 佔位文字",
+      page3: "頁面 3 佔位文字",
+    },
   },
 };

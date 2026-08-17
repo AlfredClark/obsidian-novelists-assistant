@@ -6,7 +6,7 @@ import { refreshTypeset, rerenderPreviewLeaves } from "../../features/typeset";
 import { refreshGridlines } from "../../features/gridlines";
 import { convertChapters } from "../../features/quick-menu";
 import { refreshFolderCounts, refreshStatusBar, refreshWordCount, refreshWordCountTexts } from "../../features/word-count";
-import { t } from "../i18n";
+import { notifyLanguageChange, t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
 
 /** 影响排版效果的设置键，变更时须刷新排版类 */
@@ -629,6 +629,10 @@ export class SettingsTab extends PluginSettingTab {
       value = value.trim();
     }
     void super.setControlValue(key, value);
+    // 语言切换广播：设置页 update() 只重渲染自身，依赖 t() 的其他 UI（如侧边栏）靠订阅刷新
+    if (key === "language") {
+      notifyLanguageChange();
+    }
     // 网格线渲染依赖排版类（CSS 叠加类门控）：排版关闭时拒绝开启网格线并提示
     if (key === "novelGridlines" && value === true && !this.plugin.settings.novelTypeset) {
       new Notice(t("settings.gridlinesRequiresTypeset"));

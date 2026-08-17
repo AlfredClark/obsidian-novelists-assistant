@@ -39,7 +39,9 @@
 │   ├── cores/               # 核心能力：跨功能共享的基础设施（模块三段式见代码规范）
 │   │   ├── i18n/            # 国际化模块：手动实现的多语言支持
 │   │   │   └── locales/     # 语言资源目录（文件说明见核心能力）
-│   │   └── settings/        # 设置模块：持久化设置 + 声明式设置页
+│   │   ├── settings/        # 设置模块：持久化设置 + 声明式设置页
+│   │   └── sidebar/         # 侧边栏：Ribbon 触发的多页面容器视图（说明见核心能力）
+│   │       └── components/  # Svelte 组件（根组件与页面组件，语言切换经 #key 重建）
 │   ├── features/            # 业务功能：用户可感知的具体功能
 │   │   ├── structure/       # 目录结构：默认目录创建与自动指向（说明见业务功能）
 │   │   ├── typeset/         # 排版：正文目录排版样式（说明见业务功能）
@@ -74,6 +76,7 @@
 - 手动实现，零第三方依赖；`t(key, vars?)` 为全局翻译入口，支持 `{name}` 插值，键由 `TranslationKey` 类型自动推导
 - 语言解析优先级：`settings.language`（system/en/zh/zh-TW）→ `system` 依据 Obsidian 应用语言（`getLanguage()`）判定，未知语言回退 en
 - 语言资源位于 `locales/`：`en.ts` 为类型源（as const，推导 `TranslationResource`）；`zh.ts` 导出简体 `zh` 与繁体 `zhTW`，标注 `TranslationResource` 强制与英文键同构，增删键即编译报错
+- 语言切换通知：`t()` 为普通函数调用，Svelte 组件无法追踪其依赖，模板中的 `t()` 仅在渲染时求值一次；settings 层在 `language` 设置写入后经 `notifyLanguageChange()` 广播，Svelte UI 经 `subscribeLanguageChange(listener)` 订阅并在回调中递增 `langTick` 版号，配合 `{#key langTick}` 强制重建内容块使 `t()` 重新求值（`activePage` 等 `{#key}` 块外状态保留，页面切换不丢；重建会销毁重建子组件实例，有状态页面需自行保留）
 - 添加新语言步骤：
   1. 新建 `locales/<标识>.ts`，按 `en.ts` 结构书写并标注 `TranslationResource`（缺失键即编译报错）
   2. `types.ts`：`PluginLanguage`/`SupportedLanguage` 追加语言标识
@@ -88,7 +91,17 @@
 - 设置页使用 1.13.0+ 声明式 API（`getSettingDefinitions`），读写 `plugin.settings` 与持久化由 Obsidian 自动完成；覆写 `setControlValue` 触发 `update()` 重渲染，语言切换等联动即时生效；网格线依赖正文排版：排版未开启时开启网格线、或关闭排版时网格线处于开启——仅提示网格线不可用（CSS 叠加类门控下不渲染），不强制回写（`visible` 谓词控制开关关联条目显隐）
 - 依赖 i18n 模块：界面文案经 `t()` 翻译，`PluginLanguage` 类型自 `../i18n` 导入（依赖方向 settings → i18n，无环）
 
-### utils（工具）
+### sidebar（侧边栏）
+
+- 三段式组织；core.ts 导出 `initSidebar(plugin)`，经 cores 聚合层在 initSettings 之后调用（i18n 已就绪，`t()` 可安全求值）；`registerView`/`addRibbonIcon` 由 Obsidian 卸载自动回收，无需清理函数
+- `SIDEBAR_VIEW_TYPE` 常量与 `SidebarPage`（"page1" | "page2" | "page3"）位于 types.ts；新增页面时扩展联合类型并在组件切换处追加分支
+- `SidebarView extends ItemView`：`getDisplayText` 与 Ribbon 提示用插件名常量（与 manifest name 一致，不国际化）；`onOpen` 经 `mountComponent` 挂载 Svelte 根组件，`onClose` 回收；`activateSidebar(plugin)` 已有视图叶子则 `revealLeaf` 激活，否则 `getRightLeaf(false)` 新建叶子并打开，仅负责激活不做关闭
+- 组件位于 `components/`：`SidebarRoot.svelte` 以 `$state` 维护 `activePage` 并渲染 tab 按钮栏 + `{#if}` 切换三个占位页面组件（PageOne/Two/Three），tab 与占位文案经 `t()` 翻译；语言切换经 `subscribeLanguageChange` 订阅 + `{#key langTick}` 重建内容块（见 i18n 说明，`activePage` 在块外保留，页面切换不丢）
+- 依赖方向：值导入 i18n、utils/svelte，仅 type-only 导入 main，无运行时循环
+
+## utils（工具）
+
+`src/utils/` 下通用工具功能模块专项说明。
 
 - 无状态纯函数工具目录，无生命周期，不受模块三段式约束：单文件同时导出函数与类型，无 init 方法
 - `svelte.ts`：`mountComponent(target, Component, props?)` 将 Svelte 组件挂载到目标容器（如视图的 `contentEl`），返回 `{ instance, destroy() }`；destroy 卸载组件并清空容器。组件样式经构建配置 `css: "injected"` 注入 `<head>`，卸载后样式标签残留，但编译期 class 哈希保证样式隔离
