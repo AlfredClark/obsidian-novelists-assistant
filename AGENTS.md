@@ -81,8 +81,8 @@
 - 添加新语言步骤：
   1. 新建 `locales/<标识>.ts`，按 `en.ts` 结构书写并标注 `TranslationResource`（缺失键即编译报错）
   2. `types.ts`：`PluginLanguage`/`SupportedLanguage` 追加语言标识
-  3. `core.ts`：`LOCALES` 注册新资源；`system` 自动判定如需覆盖新语言，补充映射规则
-  4. `settings/core.ts`：下拉框 `options` 追加选项（label 用对应语言本名）
+  3. `cores.ts`：`LOCALES` 注册新资源；`system` 自动判定如需覆盖新语言，补充映射规则
+  4. `settings/cores.ts`：下拉框 `options` 追加选项（label 用对应语言本名）
   5. 所有语言资源的 `languageOptions` 同步追加该语言的本名条目
 - 初始化须在 `initSettings` 之前（其内部 `addSettingTab` 会同步触发设置页渲染，`t()` 依赖 `pluginRef` 已就绪）
 
@@ -95,7 +95,7 @@
 
 ### sidebar（侧边栏）
 
-- 三段式组织；core.ts 导出 `initSidebar(plugin)`，经 cores 聚合层在 initSettings 之后调用（i18n 已就绪，`t()` 可安全求值）；`registerView`/`addRibbonIcon` 由 Obsidian 卸载自动回收，无需清理函数
+- 三段式组织；cores.ts 导出 `initSidebar(plugin)`，经 cores 聚合层在 initSettings 之后调用（i18n 已就绪，`t()` 可安全求值）；`registerView`/`addRibbonIcon` 由 Obsidian 卸载自动回收，无需清理函数
 - `SIDEBAR_VIEW_TYPE` 常量与 `SidebarPage`（"page1" | "page2" | "page3"）位于 types.ts；新增页面时扩展联合类型并在组件切换处追加分支
 - `SidebarView extends ItemView`：`getDisplayText` 与 Ribbon 提示用插件名常量（与 manifest name 一致，不国际化）；`onOpen` 经 `mountComponent` 挂载 Svelte 根组件，`onClose` 回收；`activateSidebar(plugin)` 已有视图叶子则 `revealLeaf` 激活，否则 `getRightLeaf(false)` 新建叶子并打开，仅负责激活不做关闭
 - 组件位于 `components/`：`SidebarRoot.svelte` 以 `$state` 维护 `activePage` 并渲染 tab 按钮栏 + `{#if}` 切换三个占位页面组件（PageOne/Two/Three），tab 与占位文案经 `t()` 翻译；语言切换经 `subscribeLanguageChange` 订阅 + `{#key langTick}` 重建内容块（见 i18n 说明，`activePage` 在块外保留，页面切换不丢）
@@ -126,7 +126,7 @@
 
 ### typeset（排版）
 
-- 三段式组织；core.ts 导出 `initTypeset(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`layout-change`/`active-leaf-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
+- 三段式组织；cores.ts 导出 `initTypeset(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`layout-change`/`active-leaf-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
 - `TYPESET_CLASS`/`TYPESET_TEXT_INDENT_VAR`/`TYPESET_LINE_HEIGHT_VAR`/`TYPESET_FONT_FAMILY_VAR`/`TYPESET_FONT_WEIGHT_VAR` 常量位于 types.ts；样式表以 `[data-mode="source"] .cm-content.novel-typeset` + `var(--novel-text-indent, 2rem)`/`var(--novel-line-height, 2rem)`/`var(--novel-font-family, inherit)`/`var(--novel-font-weight, inherit)` 消费（CSS 兜底默认值）；阅读视图另有独立变量 `PREVIEW_TEXT_INDENT_VAR`/`PREVIEW_LINE_HEIGHT_VAR`/`PREVIEW_FONT_FAMILY_VAR`/`PREVIEW_FONT_WEIGHT_VAR`，样式表以 `[data-mode="preview"] .markdown-preview-view` + `var(--novel-preview-*, …)` 消费（字体兜底 inherit：变量未写入时继承主题字体）
 - 依赖方向：settings 值导入 `refreshTypeset`、`rerenderPreviewLeaves` 与两个门控键数组（`TYPESET_SETTING_KEYS` 刷新排版类 / `UPDATE_SETTING_KEYS` 重渲染设置页），本模块仅 type-only 导入 main，无运行时循环
 - `refreshTypeset(plugin)`：经 `iterateAllLeaves` 遍历全部窗口叶子，按 `novelDir` 前缀 + 视图开关增删类与样式变量——源码视图由 `novelTypeset` 门控（目标 `.cm-content`，参数 `novelIndent`/`novelLineHeight`/`novelFontFamily`/`novelFontWeight` 写入 `--novel-*` 变量），阅读视图由独立开关 `novelPreviewTypeset` 门控（目标 `.markdown-preview-view`，参数 `novelPreview*` 写入 `--novel-preview-*` 变量，类名共用，选择器按 data-mode 区分）；`applyTypeset` 消费 `TypesetStyle` 对象（`enabled` + `entries` 数组，types.ts），内部循环 set/removeProperty 幂等；`CSS.supports` 防御 data.json 脏值，非法回退样式表默认；字体 trim 后为空视为未设置（移除变量继承主题）；已知限制：弹窗窗口内布局/叶子事件不触发主 workspace 刷新（初始化遍历与主窗口操作兜底）
@@ -136,7 +136,7 @@
 
 ### gridlines（网格线）
 
-- 三段式组织；core.ts 导出 `initGridlines(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`layout-change`/`active-leaf-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
+- 三段式组织；cores.ts 导出 `initGridlines(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`layout-change`/`active-leaf-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
 - `GRIDLINES_CLASS`/`GRIDLINES_SIZE_VAR`/`GRIDLINES_SPACE_VAR`/`GRIDLINES_THICK_VAR`/`GRIDLINES_OPACITY_VAR` 常量位于 types.ts；样式表以 `.novel-typeset.novel-gridlines` 叠加类消费（CSS 兜底默认值）：网格线仅在正文排版开启时渲染，保证 `position: relative` 定位基准与 `--novel-line-height` 对齐
 - 依赖方向：settings 值导入 `refreshGridlines` 与 `GRIDLINES_SETTING_KEYS`，本模块仅 type-only 导入 main，无运行时循环
 - `refreshGridlines(plugin)`：经 `iterateAllLeaves` 遍历全部窗口叶子，按 `novelDir` 前缀 + `novelGridlines` 开关增删类与 size/space/thick/opacity 变量；`CSS.supports` 防御 data.json 脏值，非法回退样式表默认；已知限制：弹窗窗口内布局/叶子事件不触发主 workspace 刷新（初始化遍历与主窗口操作兜底）
@@ -144,7 +144,7 @@
 
 ### quick-menu（快捷菜单）
 
-- 三段式组织；core.ts 导出 `initQuickMenu(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`file-menu`（`(menu, file, source, leaf?)`）与 `editor-menu`（`(menu, editor, info)`）经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收，清理函数清空注册条目（防插件重载后菜单项重复）
+- 三段式组织；cores.ts 导出 `initQuickMenu(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`file-menu`（`(menu, file, source, leaf?)`）与 `editor-menu`（`(menu, editor, info)`）经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收，清理函数清空注册条目（防插件重载后菜单项重复）
 - `FileMenuItem`/`EditorMenuItem` 位于 types.ts（含 `title`/`icon`/可选 `showIf` 谓词；`action` 异步点击行为与 `submenu` 二级菜单构建器二选一）；`FILE_MENU_ITEMS`/`EDITOR_MENU_ITEMS` 两个配置数组分别驱动两事件渲染，新增菜单项只需追加条目（异步 action 的 Promise 由 `onClick` 内 `void` 消费，防未处理 Promise）；菜单项在 init 内注册而非模块级常量，保证 `t()` 在 i18n 初始化后求值；`MenuItem.setSubmenu` 经模块内 `obsidian.d.ts` 类型增强补齐（未文档化 API，npm 类型包未声明，主流插件实证为返回式签名 `setSubmenu(): Menu`）
 - 文件菜单首个菜单项「新建章节」：`showIf` 检测目标位于 `novelDir` 内或为 `novelDir` 自身（utils/path 的 `isInsideOrSelf`）；`createNextChapter` 按 `chapterFormat`（`#` 为编号占位，设置层校验必含 `#`，运行时兜底防脏值）与 `chapterNumberStyle`（数字/中文小写/中文大写，脏值回退 digit）构建正则匹配同目录章节文件取最大编号 +1，冲突时递增直至可用，创建空文件后在当前标签页打开（文件→同目录，文件夹→其内部）；中文编号的识别与转换经 `nzh` 库（零依赖随包打包，`encodeS`/`encodeB`/`decodeS`/`decodeB`），字符集与 nzh 解码能力对齐；章节格式与编号格式经设置页「快捷菜单」分组配置
 - 设置页「快捷菜单」分组含「章节转换」（`render` 变体：输入框 + 转换按钮，输入框临时值不持久化）：`convertChapters` 将 novelDir 内匹配源格式（`#` 匹配三种编号样式任一）的章节文件重命名为 `chapterFormat` + `chapterNumberStyle` 组成的格式，保留匹配前缀之后的原标题后缀（如 `第 1 章 穿越` → `第 一 章 穿越`），已是目标格式/目标名冲突/重命名失败计入跳过，`rename` 由 Obsidian 自动更新内部链接
@@ -154,7 +154,7 @@
 
 ### export（导出）
 
-- 三段式组织；core.ts 导出 `initExport(plugin)` 返回清理函数（空操作，事件生命周期由 Obsidian 管理），经 features 聚合层注册；`file-menu` 经 `plugin.registerEvent` 注册，卸载自动回收，无 DOM 或样式残留
+- 三段式组织；cores.ts 导出 `initExport(plugin)` 返回清理函数（空操作，事件生命周期由 Obsidian 管理），经 features 聚合层注册；`file-menu` 经 `plugin.registerEvent` 注册，卸载自动回收，无 DOM 或样式残留
 - 菜单项「导出到剪切板」「导出为 txt 文件」仅对正文目录内的 md 文件出现（`novelDir` 内或为 `novelDir` 自身，判定复用 utils/path 的 `isInsideOrSelf`，与「新建章节」一致）；首个通过判定的条目前插分隔符
 - 导出管线：`vault.cachedRead` → 按设置取 `stripFrontmatter`（保留标记）或 `stripMarkdown` → 行尾空白剔除（顺带把 CRLF 归一为 LF）→ 按设置前置标题 → 按设置处理空行（删除全部空行 / 压缩为一个）→ 裁剪首尾空白；清洗后无正文（如仅含 frontmatter）时提示并中止
 - 导出细节经设置页「导出设置」分组配置（`exportClearBlankLines`/`exportTitle`/`exportKeepMarkup`，均默认关闭），导出时经 `plugin.settings` 实时读取；「导出标题」取不含扩展名的文件名，正文首个非空行经 `stripMarkdown` 归一后同名时不前置，防 txt 开头重复标题
@@ -165,7 +165,7 @@
 
 ### punctuation（标点）
 
-- 三段式组织；core.ts 导出 `initPunctuation(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；扩展经 `plugin.registerEditorExtension` 注册，Obsidian 卸载自动回收，清理函数为空操作（扩展生命周期由 Obsidian 管理）
+- 三段式组织；cores.ts 导出 `initPunctuation(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；扩展经 `plugin.registerEditorExtension` 注册，Obsidian 卸载自动回收，清理函数为空操作（扩展生命周期由 Obsidian 管理）
 - 核心机制为 `EditorState.transactionFilter`（@codemirror/state）：改写文本输入事务，天然兼容中文输入法——IME 提交的字符同为 `input.type` 事务，无需处理 beforeinput 与 composition 竞态；开关经闭包实时读取 `plugin.settings.punctuationComplete`，切换即时生效无需重注册
 - `PUNCT_PAIRS` 常量位于 types.ts：中英文全包含（半角 `()[]{}<>`、全角 `（）【】《》〈〉「」『』〔〕［］｛｝＜＞`、中文引号 `“”‘’`）；英文引号 `"`/`'` 不收录——Obsidian 内置 closeBrackets 已处理，且 `'` 会干扰撇号输入；`<>` 在 Markdown 中形成空 HTML 标签但浏览器按纯文本渲染，无实际影响；内置 closeBrackets 产出的双字符事务被多字符检查天然跳过，不重复配对
 - 事务过滤器五个行为（全部经用户事件门控）：配对插入（单字符左标点 → 插「左+右」光标居中）、选区包裹（有选区时插「左+选中文本+右」光标在闭合符前）、跳过右标点（光标后紧邻同字符时不重复插入仅前移光标，多光标逐区间处理）、退格删空对（`delete.backward` + 空选区 + 光标两侧为成对标点 → 一次删除整对）、弯引号新开一对（输入右标点 `”`/`’` 且当前段落内无未闭合对应开引号 → 改写为「左+右」光标居中——IME 的开关状态在自动补齐后脱同步，光标移出引号对之外或换行后再输入常为多余的右标点，本行为将其改写为新对；段落以最近空行为界，段落内跨越代码围栏时引号计入为已知限制，括号类右标点不参与改写）
@@ -175,7 +175,7 @@
 
 ### word-count（字数统计）
 
-- 三段式组织；core.ts 导出 `initWordCount(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`vault.on("modify"/"create"/"delete"/"rename")` 与 `layout-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
+- 三段式组织；cores.ts 导出 `initWordCount(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`vault.on("modify"/"create"/"delete"/"rename")` 与 `layout-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
 - `WORD_COUNT_CLASS`/`PROCESSED_CLASS` 常量与 `FolderCountRole`（"loreGroups" | "loreNotes" | "chapters" | "novelSubdirs"）位于 types.ts；`PROCESSED_CLASS` 标记已装饰的 `.nav-file-title`/`.nav-folder-title`（文件仅 md），刷新扫描时跳过防重复追加；样式表以 `.nav-file-title > .novel-word-count, .nav-folder-title > .novel-word-count` 消费（`margin-left: auto` 靠右显示）
 - 统计管线：`countWords(text)` 先经 `utils/markdown` 的 `stripMarkdown` 清洗（管线见核心能力），再计数——CJK（汉字/假名/谚文）与全角字母数字逐字计 1，连续半角拉丁字母/数字序列（词内撇号/连字符不拆分）计 1，标点空白不计
 - 统计缓存 `Map<path, {mtime, count}>` 按 mtime 失效，经 `vault.cachedRead` 读取避免重复读盘；`refreshWordCount(plugin)` 开关开启时装饰全部未标记文件标题（span 文案异步填充），关闭时移除全部 span 与标记（幂等，重新开启后再次装饰）；modify 事件删除缓存并按路径定位元素即时更新文案
@@ -189,7 +189,7 @@
 
 1. **命名**：类/接口 PascalCase，函数/变量 camelCase，常量 UPPER_SNAKE_CASE，文件 kebab-case
 2. **类型**：strict 全开（含 `noUncheckedIndexedAccess`）；禁止 `any` 与隐式 any
-3. **模块**：`cores/`（核心能力）与 `features/`（业务功能）下的每个模块均按三段式组织：`index.ts`（统一出口，仅 re-export）、`types.ts`（类型定义）、`core.ts`（核心逻辑，导出 `init<模块>()` 初始化方法）；模块目录使用 kebab-case，多词模块以 `-` 分隔（如 `quick-menu`），`init<模块>()` 方法名由模块名转 camelCase 派生（如 `initQuickMenu`）；各模块 init 方法由 `src/cores/index.ts`/`src/features/index.ts` 分别聚合为 `initCores()`/`initFeatures()`，main.ts 各调用一次；init 方法参数一律使用具体类 `NovelistsAssistantPlugin`，且导入一律为 `import type`（类型层循环在编译期擦除，运行时无循环）；模块特有文件（如 i18n 的 `locales/`）直接置于模块目录下，不受三段式约束
+3. **模块**：`cores/`（核心能力）与 `features/`（业务功能）下的每个模块均按三段式组织：`index.ts`（统一出口，仅 re-export）、`types.ts`（类型定义）、`cores.ts`（核心逻辑，导出 `init<模块>()` 初始化方法）；模块目录使用 kebab-case，多词模块以 `-` 分隔（如 `quick-menu`），`init<模块>()` 方法名由模块名转 camelCase 派生（如 `initQuickMenu`）；各模块 init 方法由 `src/cores/index.ts`/`src/features/index.ts` 分别聚合为 `initCores()`/`initFeatures()`，main.ts 各调用一次；init 方法参数一律使用具体类 `NovelistsAssistantPlugin`，且导入一律为 `import type`（类型层循环在编译期擦除，运行时无循环）；模块特有文件（如 i18n 的 `locales/`）直接置于模块目录下，不受三段式约束
 4. **注释**：中文，写"为什么"而非"是什么"；不做多余注释。导出声明（类/接口/函数/常量/属性）一律使用 JSDoc（`/** */`），内部逻辑用行注释；types.ts 中属性注释置于属性后方（行注释），需分组时以独立一行的 `/** */` 组注释标注；`@param`/`@returns` 仅在参数或返回值存在需要说明的语义时使用，不机械全量添加；纯 re-export 的 index.ts 无需注释
 5. **约束**：禁止 `import node:*` 与 Electron API（`obsidianmd/no-nodejs-modules` 规则）
 6. **依赖**：确认可 bundle 或需加入 esbuild `external` 列表
