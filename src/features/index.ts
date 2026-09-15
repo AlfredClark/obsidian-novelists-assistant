@@ -2,6 +2,7 @@ import { initStructure } from "./structure";
 import { initTypeset } from "./typeset";
 import { initGridlines } from "./gridlines";
 import { initQuickMenu } from "./quick-menu";
+import { initExport } from "./export";
 import { initPunctuation } from "./punctuation";
 import { initWordCount } from "./word-count";
 import type NovelistsAssistantPlugin from "../main";
@@ -19,6 +20,7 @@ export async function initFeatures(plugin: NovelistsAssistantPlugin): Promise<vo
   cleanups.push(initTypeset(plugin));
   cleanups.push(initGridlines(plugin));
   cleanups.push(initQuickMenu(plugin));
+  cleanups.push(initExport(plugin));
   cleanups.push(initPunctuation(plugin));
   cleanups.push(initWordCount(plugin));
 }

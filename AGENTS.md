@@ -48,8 +48,9 @@
 │   │   ├── gridlines/       # 网格线：正文网格虚线（说明见业务功能）
 │   │   ├── quick-menu/      # 快捷菜单：文件/编辑菜单事件（说明见业务功能）
 │   │   ├── punctuation/     # 标点：输入左标点自动补齐右标点（说明见业务功能）
-│   │   └── word-count/      # 字数统计：文件列表与状态栏字数显示（说明见业务功能）
-│   ├── utils/               # 无状态纯函数工具（如 svelte 组件挂载，说明见核心能力）
+│   │   ├── word-count/      # 字数统计：文件列表与状态栏字数显示（说明见业务功能）
+│   │   └── export/          # 导出：正文纯文本导出到剪切板或 txt（说明见业务功能）
+│   ├── utils/               # 无状态纯函数工具（Markdown 清洗、路径判定、组件挂载）
 │   └── main.ts              # 插件入口：仅调用 initCores()/initFeatures() 聚合初始化
 ├── .editorconfig            # 编辑器统一格式（与 .prettierrc 对齐）
 ├── .gitignore               # git 忽略（main.js/dist/data.json/*.map 等）
@@ -90,6 +91,7 @@
 - `DEFAULT_SETTINGS` 提供默认值，`loadSettings` 从 data.json 读取后与默认值浅合并（展开运算，避免共享默认对象被意外修改），旧版本缺字段时自动兜底
 - 设置页使用 1.13.0+ 声明式 API（`getSettingDefinitions`），读写 `plugin.settings` 与持久化由 Obsidian 自动完成；覆写 `setControlValue` 触发 `update()` 重渲染，语言切换等联动即时生效；网格线依赖正文排版：排版未开启时开启网格线、或关闭排版时网格线处于开启——仅提示网格线不可用（CSS 叠加类门控下不渲染），不强制回写（`visible` 谓词控制开关关联条目显隐）
 - 依赖 i18n 模块：界面文案经 `t()` 翻译，`PluginLanguage` 类型自 `../i18n` 导入（依赖方向 settings → i18n，无环）
+- 「导出设置」分组的三个开关仅在导出时读取，不参与刷新联动，故既不进 `UPDATE_SETTING_KEYS` 也不触发 `update()`（settings 不导入 export 模块，依赖方向仍是 export → settings 单向）
 
 ### sidebar（侧边栏）
 
@@ -104,6 +106,8 @@
 `src/utils/` 下通用工具功能模块专项说明。
 
 - 无状态纯函数工具目录，无生命周期，不受模块三段式约束：单文件同时导出函数与类型，无 init 方法
+- `markdown.ts`：`stripFrontmatter` 单独剔除文件头 YAML frontmatter（`stripMarkdown` 复用它，「保留标记」导出亦复用）；`stripMarkdown` 剔除 Markdown 标记仅留正文文字，清洗管线顺序有依赖——frontmatter/围栏代码块/行内代码/HTML 标签注释/Obsidian 注释（含跨行）/数学公式整体剔除，图片与嵌入整体剔除、链接与 wikilink 仅保留文字部分，标题/引用/列表行首标记、分隔线/表格分隔行、callout 类型标记、脚注、话题标签（负向后行断言防误伤 "C#语言"）、加粗/斜体/删除线/高亮标记、转义反斜杠剔除；自 word-count 迁出，字数统计与导出共用同一清洗口径
+- `path.ts`：`isInsideOrSelf(filePath, dirPath)` 判断路径是否位于目录内（含目录自身），归一化尾斜杠防手输 "目录/" 失效；自 quick-menu 迁出，新建章节与导出共用
 - `svelte.ts`：`mountComponent(target, Component, props?)` 将 Svelte 组件挂载到目标容器（如视图的 `contentEl`），返回 `{ instance, destroy() }`；destroy 卸载组件并清空容器。组件样式经构建配置 `css: "injected"` 注入 `<head>`，卸载后样式标签残留，但编译期 class 哈希保证样式隔离
 - `ambient.d.ts`：全局环境声明文件（无顶层 import/export，保证 declare module 为环境声明而非增强）；`*.svelte` 模块声明，tsc 层放宽 props 类型，精确类型由 svelte-check 校验（build 命令内执行）；不与 `svelte.ts` 同名——TS 对同名 .ts/.d.ts 只保留 .ts，且模块文件内 `declare module` 会被视为模块增强而非法
 - `.svelte` 组件文件属于模块特有文件，置于所属模块目录下（如 `features/<模块>/components/`），不受三段式约束
@@ -142,11 +146,22 @@
 
 - 三段式组织；core.ts 导出 `initQuickMenu(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`file-menu`（`(menu, file, source, leaf?)`）与 `editor-menu`（`(menu, editor, info)`）经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收，清理函数清空注册条目（防插件重载后菜单项重复）
 - `FileMenuItem`/`EditorMenuItem` 位于 types.ts（含 `title`/`icon`/可选 `showIf` 谓词；`action` 异步点击行为与 `submenu` 二级菜单构建器二选一）；`FILE_MENU_ITEMS`/`EDITOR_MENU_ITEMS` 两个配置数组分别驱动两事件渲染，新增菜单项只需追加条目（异步 action 的 Promise 由 `onClick` 内 `void` 消费，防未处理 Promise）；菜单项在 init 内注册而非模块级常量，保证 `t()` 在 i18n 初始化后求值；`MenuItem.setSubmenu` 经模块内 `obsidian.d.ts` 类型增强补齐（未文档化 API，npm 类型包未声明，主流插件实证为返回式签名 `setSubmenu(): Menu`）
-- 文件菜单首个菜单项「新建章节」：`showIf` 检测目标位于 `novelDir` 内或为 `novelDir` 自身（`isInsideOrSelf`）；`createNextChapter` 按 `chapterFormat`（`#` 为编号占位，设置层校验必含 `#`，运行时兜底防脏值）与 `chapterNumberStyle`（数字/中文小写/中文大写，脏值回退 digit）构建正则匹配同目录章节文件取最大编号 +1，冲突时递增直至可用，创建空文件后在当前标签页打开（文件→同目录，文件夹→其内部）；中文编号的识别与转换经 `nzh` 库（零依赖随包打包，`encodeS`/`encodeB`/`decodeS`/`decodeB`），字符集与 nzh 解码能力对齐；章节格式与编号格式经设置页「快捷菜单」分组配置
+- 文件菜单首个菜单项「新建章节」：`showIf` 检测目标位于 `novelDir` 内或为 `novelDir` 自身（utils/path 的 `isInsideOrSelf`）；`createNextChapter` 按 `chapterFormat`（`#` 为编号占位，设置层校验必含 `#`，运行时兜底防脏值）与 `chapterNumberStyle`（数字/中文小写/中文大写，脏值回退 digit）构建正则匹配同目录章节文件取最大编号 +1，冲突时递增直至可用，创建空文件后在当前标签页打开（文件→同目录，文件夹→其内部）；中文编号的识别与转换经 `nzh` 库（零依赖随包打包，`encodeS`/`encodeB`/`decodeS`/`decodeB`），字符集与 nzh 解码能力对齐；章节格式与编号格式经设置页「快捷菜单」分组配置
 - 设置页「快捷菜单」分组含「章节转换」（`render` 变体：输入框 + 转换按钮，输入框临时值不持久化）：`convertChapters` 将 novelDir 内匹配源格式（`#` 匹配三种编号样式任一）的章节文件重命名为 `chapterFormat` + `chapterNumberStyle` 组成的格式，保留匹配前缀之后的原标题后缀（如 `第 1 章 穿越` → `第 一 章 穿越`），已是目标格式/目标名冲突/重命名失败计入跳过，`rename` 由 Obsidian 自动更新内部链接
 - 编辑菜单首个菜单项「添加到设定」：选中文本且 `loreDir` 已配置时出现，二级菜单列 `loreDir` 直接子文件夹（`submenu` 构建器）；`createLoreNote` 在所选目录创建以选中文本命名的空 .md 文件（仅 trim 不清洗，非法字符/超长由创建失败兜底），仓库内任何位置存在同名（basename 大小写不敏感）设定即跳过并提示，纯空白选中静默跳过，创建成功与失败均提示
 - 编辑菜单另两项「同步/清空所有设定链接」：未选中文本且 `loreDir` 已配置时出现；`wrapLoreNames` 单遍正则包裹——已有 wikilink 与 Markdown 内链（含别名/路径形式）整体跳过不重复包裹、名称按长度降序匹配，`unwrapLoreNames` 仅解除精确 `[[名称]]` 包裹（别名/路径链接不动），两者返回 `{ text, count }` 供 `getValue`/`setValue` 整体替换与提示（count>0 才落盘提示）
 - 依赖方向：值导入 i18n、仅 type-only 导入 main，无运行时循环
+
+### export（导出）
+
+- 三段式组织；core.ts 导出 `initExport(plugin)` 返回清理函数（空操作，事件生命周期由 Obsidian 管理），经 features 聚合层注册；`file-menu` 经 `plugin.registerEvent` 注册，卸载自动回收，无 DOM 或样式残留
+- 菜单项「导出到剪切板」「导出为 txt 文件」仅对正文目录内的 md 文件出现（`novelDir` 内或为 `novelDir` 自身，判定复用 utils/path 的 `isInsideOrSelf`，与「新建章节」一致）；首个通过判定的条目前插分隔符
+- 导出管线：`vault.cachedRead` → 按设置取 `stripFrontmatter`（保留标记）或 `stripMarkdown` → 行尾空白剔除（顺带把 CRLF 归一为 LF）→ 按设置前置标题 → 按设置处理空行（删除全部空行 / 压缩为一个）→ 裁剪首尾空白；清洗后无正文（如仅含 frontmatter）时提示并中止
+- 导出细节经设置页「导出设置」分组配置（`exportClearBlankLines`/`exportTitle`/`exportKeepMarkup`，均默认关闭），导出时经 `plugin.settings` 实时读取；「导出标题」取不含扩展名的文件名，正文首个非空行经 `stripMarkdown` 归一后同名时不前置，防 txt 开头重复标题
+- 「导出到剪切板」经 `navigator.clipboard.writeText` 写入系统剪切板，成功与失败均有 Notice 反馈
+- 「导出为 txt 文件」经 Blob + `<a download>` 触发浏览器下载流程：Electron 未设置保存路径时会弹出系统「另存为」对话框，由用户自选位置与文件名，取消对话框无副作用故不追加提示；不引入 Electron/node API（Obsidian 团队成员插件同款实现）
+- 常量与类型位于 types.ts（`EXPORT_MIME_TYPE`/`EXPORT_EXTENSION`/`ExportPayload`）；依赖方向：值导入 i18n、utils，仅 type-only 导入 main，无运行时循环
+- 已知取舍：图片与嵌入整体丢弃（沿用 stripMarkdown 口径）；导出为 UTF-8 无 BOM、LF 行尾；不支持多文件批量导出
 
 ### punctuation（标点）
 
@@ -162,7 +177,7 @@
 
 - 三段式组织；core.ts 导出 `initWordCount(plugin)` 返回清理函数，经 features 聚合层 cleanups 数组回收；`vault.on("modify"/"create"/"delete"/"rename")` 与 `layout-change` 经 `plugin.registerEvent` 注册，Obsidian 卸载自动回收
 - `WORD_COUNT_CLASS`/`PROCESSED_CLASS` 常量与 `FolderCountRole`（"loreGroups" | "loreNotes" | "chapters" | "novelSubdirs"）位于 types.ts；`PROCESSED_CLASS` 标记已装饰的 `.nav-file-title`/`.nav-folder-title`（文件仅 md），刷新扫描时跳过防重复追加；样式表以 `.nav-file-title > .novel-word-count, .nav-folder-title > .novel-word-count` 消费（`margin-left: auto` 靠右显示）
-- `stripMarkdown(text)` 清洗管线（顺序有依赖）：frontmatter/围栏代码块/行内代码/HTML 标签注释/Obsidian 行内注释/数学公式整体剔除，图片与嵌入整体剔除、链接与 wikilink 仅保留文字部分，标题/引用/列表行首标记、分隔线/表格分隔行、callout 类型标记、脚注、话题标签（负向后行断言防误伤 "C#语言"）、加粗/斜体/删除线/高亮标记、转义反斜杠剔除；`countWords(text)` 计数口径：CJK（汉字/假名/谚文）与全角字母数字逐字计 1，连续半角拉丁字母/数字序列（词内撇号/连字符不拆分）计 1，标点空白不计
+- 统计管线：`countWords(text)` 先经 `utils/markdown` 的 `stripMarkdown` 清洗（管线见核心能力），再计数——CJK（汉字/假名/谚文）与全角字母数字逐字计 1，连续半角拉丁字母/数字序列（词内撇号/连字符不拆分）计 1，标点空白不计
 - 统计缓存 `Map<path, {mtime, count}>` 按 mtime 失效，经 `vault.cachedRead` 读取避免重复读盘；`refreshWordCount(plugin)` 开关开启时装饰全部未标记文件标题（span 文案异步填充），关闭时移除全部 span 与标记（幂等，重新开启后再次装饰）；modify 事件删除缓存并按路径定位元素即时更新文案
 - 文件夹统计：`resolveFolderRole` 判定角色——loreDir 自身（loreGroups）、novelDir 自身（chapters）、loreDir 直接子文件夹（loreNotes，相对路径不含 `/`）、novelDir 直接子文件夹（novelSubdirs，仅直接子文件夹，任意层级需去掉相对路径不含 `/` 判定）；精确匹配优先于子文件夹规则且 lore 规则优先于 novel 规则，防目录嵌套/相等时角色冲突；loreGroups 显示「递归设定总数 | 直接子文件夹组数」，chapters 显示「总字数 | 递归章节数」（wordCount 关闭时仅章节数），novelSubdirs 与 chapters 同口径但字数/章节数按子文件夹自身前缀递归，loreNotes 显示直接 md 文件数（非递归）；同步计数（children/getFiles 均在内存）由 `folderCountCache: Map<path, {role, count, total}>` 缓存（条目含角色，目录设置变更导致同路径角色变化时自愈失效，total 仅 loreGroups 使用），递归 md 文件数经 `countMdFiles` 统一计算（设定总数与章节数共用），目录总字数经 `sumWordCounts` 复用 per-file 缓存求和——同一文件同一 mtime 只读一次内容，modify 仅重读被改文件；create/delete/rename 清缓存并复用 debounce 扫描（折叠文件夹无子节点 DOM 变更，MutationObserver 兜不住）；modify 事件对 novelDir 前缀内文件额外触发文件夹刷新（子目录统计天然覆盖）；`refreshFolderCounts(plugin)` 开关开启时按角色装饰命中文件夹、不再命中的已装饰项移除残留，setText 前比对旧值防 DOM 抖动
 - 展示文案经 `formatCount(count, unit)` 拼接：单位非空时以空格分隔（如 "123 字"），为空时仅数字无空格，文件夹多段以 " | " 连接；单位值不国际化、设置层写入前 trim；`refreshWordCountTexts(plugin)` 重设已装饰标题文案（单位变更时调用，与 `refreshWordCount` 区分——后者跳过已处理项且被 MutationObserver 高频触发，全量重算浪费）

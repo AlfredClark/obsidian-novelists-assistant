@@ -34,6 +34,10 @@ export interface NovelistsAssistantSettings {
   /** 快捷菜单 */
   chapterFormat: string; // 自动编号章节格式，# 为编号占位（如 "第 # 章"）
   chapterNumberStyle: ChapterNumberStyle; // 章节自动编号样式：数字/中文小写/中文大写
+  /** 导出 */
+  exportClearBlankLines: boolean; // 是否删除导出文本中的全部空行（关闭时连续空行压缩为一个）
+  exportKeepMarkup: boolean; // 是否保留 Markdown 标记（仅剔除文件头 frontmatter，不做其余清洗）
+  exportTitle: boolean; // 是否在导出文本头部添加标题（不含扩展名的文件名，与正文首个非空行同名时跳过）
   /** 标点设置 */
   punctuationComplete: boolean; // 是否在输入左标点时自动补全右标点
   punctuationRepairInterval: number; // 候选替换修复时间窗（毫秒），0 表示禁用

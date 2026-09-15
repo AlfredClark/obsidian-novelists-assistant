@@ -3,6 +3,7 @@ import Nzhcn from "nzh/cn";
 import { t } from "../../cores/i18n";
 import type { ChapterNumberStyle } from "../../cores/settings";
 import type NovelistsAssistantPlugin from "../../main";
+import { isInsideOrSelf } from "../../utils/path";
 import type { EditorMenuItem, FileMenuItem } from "./types";
 /** 文件菜单项；后续新增菜单项在此追加条目 */
 const FILE_MENU_ITEMS: FileMenuItem[] = [];
@@ -15,12 +16,6 @@ const CN_LOWER_CHARS = "零一二三四五六七八九十百千万";
 
 /** 中文大写数字字符集，与 nzh decodeB 解码能力对齐 */
 const CN_UPPER_CHARS = "零壹贰叁肆伍陆柒捌玖拾佰仟万亿";
-
-/** 判断路径是否位于目录内（含目录自身）；归一化尾斜杠防手输 "目录/" 失效，空目录前缀 "/" 恒不匹配 */
-function isInsideOrSelf(filePath: string, dirPath: string): boolean {
-  const dir = dirPath.replace(/\/+$/, "");
-  return filePath === dir || filePath.startsWith(dir + "/");
-}
 
 /** 编号样式类型守卫：data.json 脏值回退默认 digit，避免分支落入未定义行为 */
 function isChapterNumberStyle(style: unknown): style is ChapterNumberStyle {

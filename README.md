@@ -37,6 +37,13 @@ Enhance your novel writing experience with various writing tools to keep complex
 - Folder stats: the lore folder shows total lore notes and groups, the novel folder shows total words and chapters, and each lore subfolder shows its note count
 - All units are configurable and can be hidden
 
+### Export
+
+- **Export to clipboard** (file menu): copies the note's text with every Markdown marker stripped
+- **Export as txt file** (file menu): saves that plain text through the system save dialog, so any folder and file name can be chosen
+- Both items appear on Markdown files inside the novel folder; a note without body text is skipped with a notice
+- Blank lines, a leading title, and keeping the Markdown markup can be configured under **Settings → Export**
+
 ## Installation
 
 ### Community plugins (recommended)

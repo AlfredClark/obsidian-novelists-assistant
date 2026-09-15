@@ -81,6 +81,9 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   novelGridlinesOpacity: 75,
   chapterFormat: "第 # 章",
   chapterNumberStyle: "digit",
+  exportClearBlankLines: false,
+  exportKeepMarkup: false,
+  exportTitle: false,
   punctuationComplete: true,
   punctuationRepairInterval: 3000,
   wordCount: true,
@@ -165,6 +168,7 @@ export class SettingsTab extends PluginSettingTab {
       this.buildCollapsibleSection(t("settings.typeset"), t("settings.typesetDesc"), this.getTypesetItems()),
       this.buildCollapsibleSection(t("settings.gridlines"), t("settings.gridlinesDesc"), this.getGridlinesItems()),
       this.buildCollapsibleSection(t("settings.quickMenu"), t("settings.quickMenuDesc"), this.getQuickMenuItems()),
+      this.buildCollapsibleSection(t("settings.export"), t("settings.exportDesc"), this.getExportItems()),
       this.buildCollapsibleSection(t("settings.punctuation"), t("settings.punctuationDesc"), this.getPunctuationItems()),
       this.buildCollapsibleSection(t("settings.wordCount"), t("settings.wordCountDesc"), this.getWordCountItems()),
     ];
@@ -465,6 +469,43 @@ export class SettingsTab extends PluginSettingTab {
               void this.handleChapterConvert(input?.getValue() ?? "");
             }),
           );
+        },
+      },
+    ];
+  }
+
+  /**
+   * 导出设置条目：导出文本细节（空行、头部标题、Markdown 标记）。
+   * 三项互相独立，无 visible 谓词；仅在导出时读取，故不参与 setControlValue 的刷新联动。
+   * 与其他可折叠分组共用条目结构，容器形态由 collapsible 决定。
+   */
+  private getExportItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
+    return [
+      {
+        name: t("settings.exportClearBlankLines"),
+        desc: t("settings.exportClearBlankLinesDesc"),
+        control: {
+          type: "toggle",
+          key: "exportClearBlankLines",
+          defaultValue: false,
+        },
+      },
+      {
+        name: t("settings.exportTitle"),
+        desc: t("settings.exportTitleDesc"),
+        control: {
+          type: "toggle",
+          key: "exportTitle",
+          defaultValue: false,
+        },
+      },
+      {
+        name: t("settings.exportKeepMarkup"),
+        desc: t("settings.exportKeepMarkupDesc"),
+        control: {
+          type: "toggle",
+          key: "exportKeepMarkup",
+          defaultValue: false,
         },
       },
     ];
