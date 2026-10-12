@@ -8,8 +8,8 @@ import { refreshGridlines } from "../../features/gridlines";
 import { applyChapterRenumber, convertChapters, convertVolumes, planChapterRenumber } from "../../features/quick-menu";
 import { ChapterRenumberModal } from "../../features/quick-menu/components/chapter-renumber-modal";
 import { refreshFolderCounts, refreshStatusBar, refreshWordCount, refreshWordCountTexts } from "../../features/word-count";
-import { notifySidebarColumnsChange } from "../sidebar/cores";
-import { SIDEBAR_COLUMNS_MAX, SIDEBAR_COLUMNS_MIN } from "../sidebar/types";
+import { notifySidebarColumnsChange } from "../sidebar";
+import { SIDEBAR_COLUMNS_MAX, SIDEBAR_COLUMNS_MIN } from "../sidebar";
 import { notifyLanguageChange, t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
 
