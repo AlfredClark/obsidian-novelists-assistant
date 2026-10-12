@@ -18,6 +18,9 @@ export interface NovelistsAssistantSettings {
   loreDir: string; // 设定目录路径，空字符串表示未配置
   novelDir: string; // 正文目录路径，空字符串表示未配置
   outlineDir: string; // 纲要目录路径，空字符串表示未配置
+  /** 侧栏 */
+  sidebarLoreColumns: number; // 设定侧栏每个分组内每行展示的条目数
+  sidebarOutlineColumns: number; // 纲要侧栏每个分组内每行展示的条目数
   /** 排版 */
   novelIndent: number; // 正文首行缩进大小（rem，0 表示不缩进）
   novelLineHeight: number; // 正文行高（rem）

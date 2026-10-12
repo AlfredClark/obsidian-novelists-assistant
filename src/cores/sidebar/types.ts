@@ -13,6 +13,18 @@ export const SIDEBAR_DIR_KEYS: Record<SidebarPage, "loreDir" | "outlineDir"> = {
   outline: "outlineDir",
 };
 
+/** 页面到每行条目数设置字段的映射，页面组件据此读取对应列数 */
+export const SIDEBAR_COLUMN_KEYS: Record<SidebarPage, "sidebarLoreColumns" | "sidebarOutlineColumns"> = {
+  lore: "sidebarLoreColumns",
+  outline: "sidebarOutlineColumns",
+};
+
+/** 每行条目数的取值范围，设置页滑块与解析钳制共用 */
+export const SIDEBAR_COLUMNS_MIN = 1;
+
+/** 每行条目数的取值上限，设置页滑块与解析钳制共用 */
+export const SIDEBAR_COLUMNS_MAX = 10;
+
 /** 目录分组：直接子文件夹与其直属 md 文件 */
 export interface DirGroup {
   folder: TFolder; // 分组文件夹
@@ -26,6 +38,11 @@ export interface DirModel {
   groups: DirGroup[]; // 直接子文件夹分组
   rootFiles: TFile[]; // 根直属 md 文件（未分组区）
 }
+
+/** 渲染节：未分组文件节或分组节，展示顺序由所属页面决定 */
+export type DirSection =
+  | { kind: "ungrouped"; files: TFile[] } // 未分组文件节
+  | { kind: "group"; group: DirGroup }; // 分组节
 
 /** 根组件属性：插件实例经视图挂载透传 */
 export interface SidebarRootProps {

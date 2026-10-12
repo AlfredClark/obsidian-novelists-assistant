@@ -92,14 +92,15 @@
 - 设置页使用 1.13.0+ 声明式 API（`getSettingDefinitions`），读写 `plugin.settings` 与持久化由 Obsidian 自动完成；覆写 `setControlValue` 触发 `update()` 重渲染，语言切换等联动即时生效；网格线依赖正文排版：排版未开启时开启网格线、或关闭排版时网格线处于开启——仅提示网格线不可用（CSS 叠加类门控下不渲染），不强制回写（`visible` 谓词控制开关关联条目显隐）
 - 依赖 i18n 模块：界面文案经 `t()` 翻译，`PluginLanguage` 类型自 `../i18n` 导入（依赖方向 settings → i18n，无环）
 - 「导出设置」分组的三个开关仅在导出时读取，不参与刷新联动，故既不进 `UPDATE_SETTING_KEYS` 也不触发 `update()`（settings 不导入 export 模块，依赖方向仍是 export → settings 单向）
+- 「侧栏设置」分组含设定/纲要每行条目数两个滑块（`sidebarLoreColumns` 默认 4 / `sidebarOutlineColumns` 默认 1，范围 1-10 步长 1，目录分组后注册）；滑块变更只经 `notifySidebarColumnsChange()` 广播重排侧栏网格，不进 `UPDATE_SETTING_KEYS` 不重建设置页（依赖方向 settings → sidebar 单向，sidebar 不值导入 settings）
 
 ### sidebar（侧边栏）
 
 - 三段式组织；cores.ts 导出 `initSidebar(plugin)`，经 cores 聚合层在 initSettings 之后调用（i18n 已就绪，`t()` 可安全求值）；`registerView`/`addRibbonIcon` 由 Obsidian 卸载自动回收，无需清理函数
-- `SIDEBAR_VIEW_TYPE` 常量、`SidebarPage`（"lore" | "outline"）、`SIDEBAR_DIR_KEYS`（页面到目录设置字段映射）、`DirGroup`/`DirModel` 位于 types.ts；`buildDirectoryModel(plugin, dir)` 位于 cores.ts（一层分组 + 未分组区，深层忽略，仅 md，数字感知排序，纯内存遍历）
+- `SIDEBAR_VIEW_TYPE` 常量、`SidebarPage`（"lore" | "outline"）、`SIDEBAR_DIR_KEYS`（页面到目录设置字段映射）、`SIDEBAR_COLUMN_KEYS`（页面到每行条目数设置字段映射）、`SIDEBAR_COLUMNS_MIN`/`MAX`（1-10，滑块与解析钳制共用）、`DirGroup`/`DirModel`/`DirSection`（未分组文件节或分组节）位于 types.ts；`buildDirectoryModel(plugin, dir)` 位于 cores.ts（一层分组 + 未分组区，深层忽略，仅 md，数字感知排序，纯内存遍历）；`orderDirectorySections(model, page)` 排布渲染节（lore 分组在前、未分组节殿后，outline 未分组节置顶、分组随后，未分组无文件时不产生空节）；`resolveSidebarColumns(plugin, page)` 取整钳制 1-10，脏值按页回退（lore 4 / outline 1，与 settings 默认值保持一致）；`notifySidebarColumnsChange`/`subscribeSidebarColumnsChange` 模块级广播（仿语言切换模式），滑块写入后通知已开目录页重排
 - `SidebarView extends ItemView`：`getDisplayText` 与 Ribbon 提示用插件名常量（与 manifest name 一致，不国际化）；构造函数接收插件实例并经挂载属性透传给页面组件（`this.app` 是 Obsidian App，不可用）；`onOpen` 经 `mountComponent` 挂载 Svelte 根组件，`onClose` 回收；`activateSidebar(plugin)` 已有视图叶子则 `revealLeaf` 激活，否则 `getRightLeaf(false)` 新建叶子并打开，仅负责激活不做关闭
-- 组件位于 `components/`：`SidebarRoot.svelte` 以 `$state` 维护 `activePage` + `readingFile` 状态机 + 跨页保留的 `query`（列表态显示 tabs 与右侧搜索框，阅读态隐藏 tabs 仅显示返回按钮，按路径 `#key` 切文件归零滚动）；`DirectoryPage.svelte` 为通用目录列表（props 传递 `plugin`/`page`/`query`/`onopen`，目录经 `SIDEBAR_DIR_KEYS` 解析，`filterDirectoryModel` 纯函数经 `$derived` 过滤，分组用原生 `<details>`）；`ReadingPage.svelte` 经 `MarkdownRenderer.render` 渲染预览（自建 `Component` 对齐生命周期，`modify` 按路径重渲染，`delete` 置空提示）；页面内订阅一律 `onMount` + `offref` 退订，不用 `plugin.registerEvent`（防 `#key` 重建叠加）；样式用 `novel-side-*` 自有类，不复用 `.nav-file-title`（防字数统计 MutationObserver 顺手装饰）；设置页改目录无事件，开着的侧栏下次重开刷新
-- 依赖方向：值导入 i18n、utils/svelte，仅 type-only 导入 main，无运行时循环
+- 组件位于 `components/`：`SidebarRoot.svelte` 以 `$state` 维护 `activePage` + `readingFile` 状态机 + 跨页保留的 `query`（列表态显示 tabs 与右侧搜索框，阅读态隐藏 tabs 仅显示返回按钮，按路径 `#key` 切文件归零滚动）；`DirectoryPage.svelte` 为通用目录列表（props 传递 `plugin`/`page`/`query`/`onopen`，目录经 `SIDEBAR_DIR_KEYS` 解析，列数经 `resolveSidebarColumns` + `columnsTick` 版号 `$derived.by` 计算，`filterDirectoryModel` 纯函数经 `$derived` 过滤，`orderDirectorySections` 经 `$derived` 排节后单 `{#each}` 渲染，分组用原生 `<details>`，文件网格经 `{#snippet fileGrid}` 复用，「未分组」标题仅 lore 页显示、outline 页未分组节无标题置顶，条目经 `centered` 类居中单行省略（多列或纲要页，悬停经 `title` 显示全名；设定单列保持左对齐列表样式），列数订阅只重算样式不重建模型故搜索词与滚动保留）；`ReadingPage.svelte` 经 `MarkdownRenderer.render` 渲染预览（自建 `Component` 对齐生命周期，`modify` 按路径重渲染，`delete` 置空提示）；页面内订阅一律 `onMount` + `offref` 退订，不用 `plugin.registerEvent`（防 `#key` 重建叠加）；样式用 `novel-side-*` 自有类，不复用 `.nav-file-title`（防字数统计 MutationObserver 顺手装饰）；设置页改目录无事件，开着的侧栏下次重开刷新（列数滑块经广播即时重排除外）
+- 依赖方向：值导入 i18n、utils/svelte，仅 type-only 导入 main，无运行时循环（settings 单向值导入本模块的 notify 函数）
 
 ## utils（工具）
 

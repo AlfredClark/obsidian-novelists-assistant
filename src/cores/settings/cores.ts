@@ -8,6 +8,8 @@ import { refreshGridlines } from "../../features/gridlines";
 import { applyChapterRenumber, convertChapters, convertVolumes, planChapterRenumber } from "../../features/quick-menu";
 import { ChapterRenumberModal } from "../../features/quick-menu/components/chapter-renumber-modal";
 import { refreshFolderCounts, refreshStatusBar, refreshWordCount, refreshWordCountTexts } from "../../features/word-count";
+import { notifySidebarColumnsChange } from "../sidebar/cores";
+import { SIDEBAR_COLUMNS_MAX, SIDEBAR_COLUMNS_MIN } from "../sidebar/types";
 import { notifyLanguageChange, t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
 
@@ -60,6 +62,9 @@ const FOLDER_COUNT_SETTING_KEYS: readonly string[] = [
   "novelDir",
 ];
 
+/** 侧栏每行条目数设置键，变更时广播通知已打开的侧栏重排网格 */
+const SIDEBAR_COLUMNS_SETTING_KEYS: readonly string[] = ["sidebarLoreColumns", "sidebarOutlineColumns"];
+
 /** 设置默认值。data.json 缺失字段时（如旧版本升级）以此为兜底合并 */
 export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   collapsible: false,
@@ -67,6 +72,8 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   loreDir: "",
   novelDir: "",
   outlineDir: "",
+  sidebarLoreColumns: 4,
+  sidebarOutlineColumns: 1,
   novelIndent: 2,
   novelLineHeight: 1.75,
   novelTypeset: true,
@@ -171,6 +178,7 @@ export class SettingsTab extends PluginSettingTab {
       },
       // 可折叠分组：collapsible 开启时收进可导航子页，否则内联展开
       this.buildCollapsibleSection(t("settings.directory"), t("settings.directoryDesc"), this.getDirectoryItems()),
+      this.buildCollapsibleSection(t("settings.sidebar"), t("settings.sidebarDesc"), this.getSidebarItems()),
       this.buildCollapsibleSection(t("settings.typeset"), t("settings.typesetDesc"), this.getTypesetItems()),
       this.buildCollapsibleSection(t("settings.gridlines"), t("settings.gridlinesDesc"), this.getGridlinesItems()),
       this.buildCollapsibleSection(t("settings.quickMenu"), t("settings.quickMenuDesc"), this.getQuickMenuItems()),
@@ -240,6 +248,40 @@ export class SettingsTab extends PluginSettingTab {
         }),
         action: () => {
           void this.handleCreateStructure();
+        },
+      },
+    ];
+  }
+
+  /**
+   * 侧栏设置条目：设定与纲要侧栏每个分组内每行展示的条目数。
+   * 滑块变更只广播重排侧栏网格，不重建设置页。
+   * 与其他可折叠分组共用条目结构，容器形态由 collapsible 决定。
+   */
+  private getSidebarItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
+    return [
+      {
+        name: t("settings.sidebarLoreColumns"),
+        desc: t("settings.sidebarLoreColumnsDesc"),
+        control: {
+          type: "slider",
+          key: "sidebarLoreColumns",
+          defaultValue: 4,
+          min: SIDEBAR_COLUMNS_MIN,
+          max: SIDEBAR_COLUMNS_MAX,
+          step: 1,
+        },
+      },
+      {
+        name: t("settings.sidebarOutlineColumns"),
+        desc: t("settings.sidebarOutlineColumnsDesc"),
+        control: {
+          type: "slider",
+          key: "sidebarOutlineColumns",
+          defaultValue: 1,
+          min: SIDEBAR_COLUMNS_MIN,
+          max: SIDEBAR_COLUMNS_MAX,
+          step: 1,
         },
       },
     ];
@@ -835,6 +877,10 @@ export class SettingsTab extends PluginSettingTab {
     // 仅文件夹统计相关设置变更时刷新文件夹装饰（角色/开关/单位/目录）
     if (FOLDER_COUNT_SETTING_KEYS.includes(key)) {
       refreshFolderCounts(this.plugin);
+    }
+    // 侧栏每行条目数变更：广播通知已打开的侧栏重排网格（仅改列数，不重建目录模型）
+    if (SIDEBAR_COLUMNS_SETTING_KEYS.includes(key)) {
+      notifySidebarColumnsChange();
     }
   }
 }

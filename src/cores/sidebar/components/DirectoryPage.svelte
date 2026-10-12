@@ -1,9 +1,16 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { t } from "../../i18n";
-  import { buildDirectoryModel, filterDirectoryModel } from "../cores";
+  import {
+    buildDirectoryModel,
+    filterDirectoryModel,
+    orderDirectorySections,
+    resolveSidebarColumns,
+    subscribeSidebarColumnsChange,
+  } from "../cores";
   import { SIDEBAR_DIR_KEYS } from "../types";
   import type { DirectoryPageProps, DirModel, SidebarPage } from "../types";
+  import type { TFile } from "obsidian";
 
   /** 所属页面、搜索词与打开回调；目录由页面经 SIDEBAR_DIR_KEYS 解析 */
   let { plugin, page, query, onopen }: DirectoryPageProps = $props();
@@ -11,8 +18,20 @@
   /** 目录模型；初建与页面切换经 effect 重建，vault 事件经订阅重建 */
   let model = $state<DirModel | null>(null);
 
+  /** 列数版本标记；侧栏滑块变更时递增，columns 重算（plugin.settings 突变不触发 Svelte 响应） */
+  let columnsTick = $state(0);
+
+  /** 当前页每行条目数；脏值由 resolveSidebarColumns 钳制回退 */
+  let columns = $derived.by(() => {
+    void columnsTick;
+    return resolveSidebarColumns(plugin, page);
+  });
+
   /** 过滤后的模型；空查询返回原模型 */
   let filtered = $derived(model ? filterDirectoryModel(model, query) : null);
+
+  /** 排好序的渲染节；设定分组在前未分组殿后，纲要未分组置顶 */
+  let sections = $derived(filtered ? orderDirectorySections(filtered, page) : null);
 
   /** 是否处于搜索态；搜索无命中时显示无匹配而非空目录 */
   let filtering = $derived(query.trim() !== "");
@@ -28,11 +47,14 @@
     const deleteRef = plugin.app.vault.on("delete", () => refresh(page));
     const renameRef = plugin.app.vault.on("rename", () => refresh(page));
     const layoutRef = plugin.app.workspace.on("layout-change", () => refresh(page));
+    // 侧栏滑块变更只重算列数，不重建目录模型（搜索词与滚动状态保留）
+    const unsubscribeColumns = subscribeSidebarColumnsChange(() => (columnsTick += 1));
     return () => {
       plugin.app.vault.offref(createRef);
       plugin.app.vault.offref(deleteRef);
       plugin.app.vault.offref(renameRef);
       plugin.app.workspace.offref(layoutRef);
+      unsubscribeColumns();
     };
   });
 
@@ -42,7 +64,23 @@
   });
 </script>
 
-{#if model && filtered}
+{#snippet fileGrid(files: TFile[])}
+  <div class="novel-side-files" style={`grid-template-columns: repeat(${columns}, minmax(0, 1fr));`}>
+    {#each files as file (file.path)}
+      <button
+        type="button"
+        class="novel-side-file"
+        class:centered={columns > 1 || page === "outline"}
+        title={file.basename}
+        onclick={() => onopen(file)}
+      >
+        {file.basename}
+      </button>
+    {/each}
+  </div>
+{/snippet}
+
+{#if model && filtered && sections}
   {#if !model.configured}
     <div class="novel-side-empty">{t("sidebar.unconfigured")}</div>
   {:else if !model.exists}
@@ -50,28 +88,23 @@
   {:else if filtered.groups.length === 0 && filtered.rootFiles.length === 0}
     <div class="novel-side-empty">{filtering ? t("sidebar.noMatch") : t("sidebar.empty")}</div>
   {:else}
-    {#each filtered.groups as group (group.folder.path)}
-      <details class="novel-side-group" open>
-        <summary class="novel-side-group-title">{group.folder.name}</summary>
-        {#if group.files.length === 0}
-          <div class="novel-side-empty-sub">{t("sidebar.groupEmpty")}</div>
-        {:else}
-          {#each group.files as file (file.path)}
-            <button type="button" class="novel-side-file" onclick={() => onopen(file)}>
-              {file.basename}
-            </button>
-          {/each}
+    {#each sections as section (section.kind === "group" ? section.group.folder.path : "ungrouped")}
+      {#if section.kind === "group"}
+        <details class="novel-side-group" open>
+          <summary class="novel-side-group-title">{section.group.folder.name}</summary>
+          {#if section.group.files.length === 0}
+            <div class="novel-side-empty-sub">{t("sidebar.groupEmpty")}</div>
+          {:else}
+            {@render fileGrid(section.group.files)}
+          {/if}
+        </details>
+      {:else}
+        {#if page === "lore"}
+          <div class="novel-side-ungrouped-title">{t("sidebar.ungrouped")}</div>
         {/if}
-      </details>
+        {@render fileGrid(section.files)}
+      {/if}
     {/each}
-    {#if filtered.rootFiles.length > 0}
-      <div class="novel-side-ungrouped-title">{t("sidebar.ungrouped")}</div>
-      {#each filtered.rootFiles as file (file.path)}
-        <button type="button" class="novel-side-file" onclick={() => onopen(file)}>
-          {file.basename}
-        </button>
-      {/each}
-    {/if}
   {/if}
 {/if}
 
@@ -131,5 +164,19 @@
   .novel-side-file:hover {
     background: var(--background-modifier-hover);
     color: var(--text-normal);
+  }
+
+  .novel-side-files {
+    display: grid;
+    gap: 4px;
+  }
+
+  /* 多列或纲要页时单元格居中、单行省略（悬停经 title 显示全名）；设定单列保持原有左对齐列表样式 */
+  .novel-side-file.centered {
+    padding: 5px 8px;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 </style>

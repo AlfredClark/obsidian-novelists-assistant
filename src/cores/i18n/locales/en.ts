@@ -111,6 +111,12 @@ const en = {
     novelGridlinesDesc: "Show grid lines under each line in novel files",
     outlineDir: "Outline folder",
     outlineDirDesc: "Folder for novel outlines, detailed outlines, foreshadowing and timelines",
+    sidebar: "Sidebar",
+    sidebarDesc: "Configure how many entries each row shows in the sidebar groups",
+    sidebarLoreColumns: "Lore entries per row",
+    sidebarLoreColumnsDesc: "Entries shown per row in each lore group (1-10)",
+    sidebarOutlineColumns: "Outline entries per row",
+    sidebarOutlineColumnsDesc: "Entries shown per row in each outline group (1-10)",
     punctuation: "Punctuation",
     punctuationComplete: "Auto-complete punctuation",
     punctuationCompleteDesc:

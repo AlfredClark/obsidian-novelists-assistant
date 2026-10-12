@@ -1,7 +1,7 @@
 import { ItemView, TFile, TFolder } from "obsidian";
 import type { TAbstractFile, WorkspaceLeaf } from "obsidian";
-import { SIDEBAR_VIEW_TYPE } from "./types";
-import type { DirModel } from "./types";
+import { SIDEBAR_COLUMNS_MAX, SIDEBAR_COLUMNS_MIN, SIDEBAR_COLUMN_KEYS, SIDEBAR_VIEW_TYPE } from "./types";
+import type { DirModel, DirSection, SidebarPage } from "./types";
 import { mountComponent } from "../../utils/svelte";
 import type { MountedComponent } from "../../utils/svelte";
 import type NovelistsAssistantPlugin from "../../main";
@@ -114,6 +114,60 @@ export function filterDirectoryModel(model: DirModel, query: string): DirModel {
     return files.length > 0 ? [{ folder: group.folder, files }] : [];
   });
   return { ...model, groups, rootFiles: model.rootFiles.filter((file) => matches(file.basename)) };
+}
+
+/** 每行条目数变更订阅回调集合；滑块变更时通知已打开的目录页重排网格 */
+const sidebarColumnsListeners = new Set<() => void>();
+
+/**
+ * 订阅每行条目数变更。变更仅发生在设置页侧栏滑块（settings 层写入后广播），
+ * 订阅方在回调中重算列数并重排网格（目录模型不动，搜索词与页签状态保留）。
+ * @param listener 条目数变更回调
+ * @returns 取消订阅函数
+ */
+export function subscribeSidebarColumnsChange(listener: () => void): () => void {
+  sidebarColumnsListeners.add(listener);
+  return () => {
+    sidebarColumnsListeners.delete(listener);
+  };
+}
+
+/** 广播每行条目数变更。由 settings 模块在侧栏滑块写入后调用 */
+export function notifySidebarColumnsChange(): void {
+  sidebarColumnsListeners.forEach((listener) => listener());
+}
+
+/**
+ * 解析指定页面的每行条目数：取整后钳制在取值范围内，脏值回退对应页默认值。
+ * data.json 手改或旧版本脏数据经此防御，不污染网格模板。
+ * @param plugin 插件实例
+ * @param page 侧边栏页面
+ * @returns 钳制后的每行条目数
+ */
+export function resolveSidebarColumns(plugin: NovelistsAssistantPlugin, page: SidebarPage): number {
+  // 默认值与 settings 的 DEFAULT_SETTINGS 保持一致（lore 4 / outline 1），此处硬编码防运行时循环
+  const fallback = page === "lore" ? 4 : 1;
+  const raw = plugin.settings[SIDEBAR_COLUMN_KEYS[page]];
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return fallback;
+  const floored = Math.floor(raw);
+  if (floored < SIDEBAR_COLUMNS_MIN) return SIDEBAR_COLUMNS_MIN;
+  if (floored > SIDEBAR_COLUMNS_MAX) return SIDEBAR_COLUMNS_MAX;
+  return floored;
+}
+
+/**
+ * 排布渲染节：设定页分组在前、未分组节殿后；纲要页未分组节置顶、分组随后。
+ * 未分组无文件时不产生空节；空分组保留，由模板提示空分组。
+ * 纯函数，供页面经 $derived 计算。
+ * @param model 过滤后的目录模型
+ * @param page 侧边栏页面
+ * @returns 排好序的渲染节
+ */
+export function orderDirectorySections(model: DirModel, page: SidebarPage): DirSection[] {
+  const groups = model.groups.map((group) => ({ kind: "group" as const, group }));
+  if (model.rootFiles.length === 0) return groups;
+  const ungrouped = { kind: "ungrouped" as const, files: model.rootFiles };
+  return page === "outline" ? [ungrouped, ...groups] : [...groups, ungrouped];
 }
 
 /**
