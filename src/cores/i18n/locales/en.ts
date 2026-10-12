@@ -147,6 +147,8 @@ const en = {
     clearLoreLinks: "Clear all lore links",
     clearResult: "Cleared {count} lore links",
     convertResult: "Converted {converted} chapters, skipped {skipped}",
+    dissolveResult: "Dissolved volume: moved {moved}, skipped {skipped}",
+    dissolveVolume: "Dissolve volume",
     loreCreated: "Lore note created: {name}",
     loreCreateFailed: "Failed to create lore note: {name}",
     loreExists: 'Lore note "{name}" already exists, skipped',

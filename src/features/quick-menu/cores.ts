@@ -254,6 +254,35 @@ async function confirmVolumeName(plugin: NovelistsAssistantPlugin, modal: Volume
 }
 
 /**
+ * 解散分卷：将正文直属子卷的直接子项（文件或文件夹整体）逐个移至正文根目录，不删除原卷。
+ * 目标同名时跳过该子项（绝不覆盖）；空卷与残留由用户手动处理，仅 Notice 汇总。
+ * rename 由 Obsidian 自动更新内部链接。
+ * @param plugin 插件实例
+ * @param folder 待解散的卷目录（正文直属子文件夹，调用方已由 showIf 限定）
+ */
+export async function dissolveVolume(plugin: NovelistsAssistantPlugin, folder: TFolder): Promise<void> {
+  const { novelDir } = plugin.settings;
+  if (novelDir === "") return;
+  let moved = 0;
+  let skipped = 0;
+  // 快照后执行：rename 会扰动 children 活数组，直接遍历会跳项
+  for (const child of [...folder.children]) {
+    const newPath = `${novelDir}/${child.name}`;
+    if (plugin.app.vault.getAbstractFileByPath(newPath)) {
+      skipped += 1;
+      continue;
+    }
+    try {
+      await plugin.app.vault.rename(child, newPath);
+      moved += 1;
+    } catch {
+      skipped += 1;
+    }
+  }
+  new Notice(t("quickMenu.dissolveResult", { moved, skipped }));
+}
+
+/**
  * 分卷转换：将正文目录的直接子文件夹中匹配源格式的卷目录重命名为目标格式（volumeFormat + volumeNumberStyle）。
  * 源格式的 # 匹配三种编号样式任一；保留编号之后的原目录名后缀（如 "第 1 卷 风起" 的 " 风起"）。
  * 已是目标格式、目标名冲突或重命名失败均计入跳过。
@@ -574,6 +603,20 @@ export function initQuickMenu(plugin: NovelistsAssistantPlugin): () => void {
         void confirmVolumeName(plugin, modal, name);
       });
       modal.open();
+    },
+  });
+  FILE_MENU_ITEMS.push({
+    title: t("quickMenu.dissolveVolume"),
+    icon: "folder-minus",
+    showIf: (file) => {
+      const novelDir = plugin.settings.novelDir;
+      // 仅正文直属子卷：父目录即正文目录（正文根自身与嵌套目录不出现）
+      return novelDir !== "" && file instanceof TFolder && file.parent?.path === novelDir;
+    },
+    action: async (file) => {
+      if (file instanceof TFolder) {
+        await dissolveVolume(plugin, file);
+      }
     },
   });
   EDITOR_MENU_ITEMS.push({
