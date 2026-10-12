@@ -66,6 +66,7 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   language: "system",
   loreDir: "",
   novelDir: "",
+  outlineDir: "",
   novelIndent: 2,
   novelLineHeight: 1.75,
   novelTypeset: true,
@@ -194,11 +195,11 @@ export class SettingsTab extends PluginSettingTab {
   }
 
   /**
-   * 目录设置条目：两个目录选择控件与一键创建入口。
+   * 目录设置条目：三个目录选择控件与一键创建入口。
    * group 与 page 两种容器共用，仅容器形态由 collapsible 决定。
    */
   private getDirectoryItems(): SettingGroupItem<keyof NovelistsAssistantSettings>[] {
-    const [lore, novel] = getDefaultDirectories();
+    const [lore, novel, outline] = getDefaultDirectories();
     return [
       {
         name: t("settings.loreDir"),
@@ -221,10 +222,21 @@ export class SettingsTab extends PluginSettingTab {
         },
       },
       {
+        name: t("settings.outlineDir"),
+        desc: t("settings.outlineDirDesc"),
+        control: {
+          type: "folder",
+          key: "outlineDir",
+          defaultValue: "",
+          placeholder: t("settings.directoryPlaceholder"),
+        },
+      },
+      {
         name: t("settings.createStructure"),
         desc: t("settings.createStructureDesc", {
           lore: lore?.name ?? "",
           novel: novel?.name ?? "",
+          outline: outline?.name ?? "",
         }),
         action: () => {
           void this.handleCreateStructure();

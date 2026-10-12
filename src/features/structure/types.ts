@@ -1,5 +1,5 @@
 /** 目录角色标识，与 settings 中的目录字段一一对应 */
-export type DirectoryRole = "lore" | "novel";
+export type DirectoryRole = "lore" | "novel" | "outline";
 
 /** 默认目录条目：角色 + 本地化的目录名 */
 export interface DirectoryEntry {

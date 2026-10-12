@@ -119,8 +119,8 @@
 ### structure（目录结构）
 
 - 三段式组织；依赖方向：settings 值导入本模块（设置页一键创建入口），本模块值导入 i18n、仅 type-only 导入 main/settings，无运行时循环
-- `DirectoryRole`（"lore" | "novel"）与设置字段（`loreDir`/`novelDir`）经 `SETTING_KEYS` 一一对应
-- `getDefaultDirectories()` 按当前界面语言生成默认目录名（en: Lore/Novel，zh: 设定/正文，zh-TW: 設定/正文）；仅在创建时取值并持久化，切换语言不影响已建目录
+- `DirectoryRole`（"lore" | "novel" | "outline"）与设置字段（`loreDir`/`novelDir`/`outlineDir`）经 `SETTING_KEYS` 一一对应
+- `getDefaultDirectories()` 按当前界面语言生成默认目录名（en: Lore/Novel/Outline，zh: 设定/正文/纲要，zh-TW: 設定/正文/綱要）；仅在创建时取值并持久化，切换语言不影响已建目录
 - `createDefaultStructure(plugin)`：设置页一键创建——已有有效指向的角色不动，其余按默认名补齐（已存在跳过创建、同名文件占用归入 failed）并写入设置，返回 `CreateStructureResult` 由调用方反馈
 - `initStructure(plugin)`：启动时探测默认目录，已存在且设置未指向则自动补齐并持久化，缺失时静默不打扰
 

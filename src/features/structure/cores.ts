@@ -4,9 +4,10 @@ import type { CreateStructureResult, DirectoryEntry, DirectoryRole } from "./typ
 import type NovelistsAssistantPlugin from "../../main";
 
 /** 各角色对应的设置字段名，保证角色与字段一一对应 */
-const SETTING_KEYS: Record<DirectoryRole, "loreDir" | "novelDir"> = {
+const SETTING_KEYS: Record<DirectoryRole, "loreDir" | "novelDir" | "outlineDir"> = {
   lore: "loreDir",
   novel: "novelDir",
+  outline: "outlineDir",
 };
 
 /**
@@ -17,6 +18,7 @@ export function getDefaultDirectories(): DirectoryEntry[] {
   return [
     { role: "lore", name: t("structure.defaultLore") },
     { role: "novel", name: t("structure.defaultNovel") },
+    { role: "outline", name: t("structure.defaultOutline") },
   ];
 }
 
@@ -29,7 +31,7 @@ export function getDefaultDirectories(): DirectoryEntry[] {
 export async function createDefaultStructure(plugin: NovelistsAssistantPlugin): Promise<CreateStructureResult> {
   const result: CreateStructureResult = { created: [], failed: [] };
   // 记录实际改动的指向，仅在有改动时落盘；保存失败时按此回滚内存，避免界面与磁盘不一致
-  const updated: Array<{ key: "loreDir" | "novelDir"; previous: string; name: string }> = [];
+  const updated: Array<{ key: "loreDir" | "novelDir" | "outlineDir"; previous: string; name: string }> = [];
   for (const { role, name } of getDefaultDirectories()) {
     const key = SETTING_KEYS[role];
     const current = plugin.settings[key];
