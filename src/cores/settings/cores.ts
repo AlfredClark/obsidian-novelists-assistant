@@ -1,10 +1,12 @@
 import { Notice, PluginSettingTab, TextComponent } from "obsidian";
 import type { SettingDefinitionItem, SettingGroupItem } from "obsidian";
 import type { NovelistsAssistantSettings } from "./types";
+import type { ChapterRenumberPlan } from "../../features/quick-menu";
 import { createDefaultStructure, getDefaultDirectories } from "../../features/structure";
 import { refreshTypeset, rerenderPreviewLeaves } from "../../features/typeset";
 import { refreshGridlines } from "../../features/gridlines";
-import { convertChapters } from "../../features/quick-menu";
+import { applyChapterRenumber, convertChapters, convertVolumes, planChapterRenumber } from "../../features/quick-menu";
+import { ChapterRenumberModal } from "../../features/quick-menu/components/chapter-renumber-modal";
 import { refreshFolderCounts, refreshStatusBar, refreshWordCount, refreshWordCountTexts } from "../../features/word-count";
 import { notifyLanguageChange, t } from "../i18n";
 import type NovelistsAssistantPlugin from "../../main";
@@ -81,6 +83,9 @@ export const DEFAULT_SETTINGS: NovelistsAssistantSettings = {
   novelGridlinesOpacity: 75,
   chapterFormat: "第 # 章",
   chapterNumberStyle: "digit",
+  chapterCountMode: "perVolume",
+  volumeFormat: "第#卷",
+  volumeNumberStyle: "digit",
   exportClearBlankLines: false,
   exportKeepMarkup: false,
   exportTitle: false,
@@ -471,6 +476,71 @@ export class SettingsTab extends PluginSettingTab {
           );
         },
       },
+      {
+        name: t("settings.volumeFormat"),
+        desc: t("settings.volumeFormatDesc"),
+        control: {
+          type: "text",
+          key: "volumeFormat",
+          defaultValue: "第#卷",
+        },
+      },
+      {
+        name: t("settings.volumeNumberStyle"),
+        desc: t("settings.volumeNumberStyleDesc"),
+        control: {
+          type: "dropdown",
+          key: "volumeNumberStyle",
+          defaultValue: "digit",
+          options: {
+            digit: t("settings.numberStyleOptions.digit"),
+            chineseLower: t("settings.numberStyleOptions.chineseLower"),
+            chineseUpper: t("settings.numberStyleOptions.chineseUpper"),
+          },
+        },
+      },
+      {
+        name: t("settings.volumeConvert"),
+        desc: t("settings.volumeConvertDesc"),
+        render: (setting) => {
+          // 输入框为临时值不持久化；按钮触发分卷转换（提升变量供按钮回调读取）
+          let input: TextComponent | null = null;
+          setting.addText((text) => {
+            text.setPlaceholder(t("settings.volumeConvertPlaceholder"));
+            input = text;
+          });
+          setting.addButton((button) =>
+            button.setButtonText(t("settings.chapterConvertAction")).onClick(() => {
+              void this.handleVolumeConvert(input?.getValue() ?? "");
+            }),
+          );
+        },
+      },
+      {
+        name: t("settings.chapterCountMode"),
+        desc: t("settings.chapterCountModeDesc"),
+        control: {
+          type: "dropdown",
+          key: "chapterCountMode",
+          defaultValue: "perVolume",
+          options: {
+            perVolume: t("settings.countModeOptions.perVolume"),
+            unified: t("settings.countModeOptions.unified"),
+          },
+        },
+      },
+      {
+        name: t("settings.renumberChapters"),
+        desc: t("settings.renumberChaptersDesc"),
+        render: (setting) => {
+          // 先推演方案再弹窗确认，无改动直接提示不打扰
+          setting.addButton((button) =>
+            button.setButtonText(t("settings.chapterConvertAction")).onClick(() => {
+              this.handleChapterRenumber();
+            }),
+          );
+        },
+      },
     ];
   }
 
@@ -647,10 +717,48 @@ export class SettingsTab extends PluginSettingTab {
     new Notice(t("quickMenu.convertResult", { converted, skipped }));
   }
 
+  /**
+   * 分卷转换：源格式必须含 # 编号占位，否则提示无效；转换完成后按统计反馈。
+   */
+  private async handleVolumeConvert(sourceFormat: string): Promise<void> {
+    if (!sourceFormat.includes("#")) {
+      new Notice(t("settings.volumeConvertInvalid"));
+      return;
+    }
+    const { converted, skipped } = await convertVolumes(this.plugin, sourceFormat);
+    new Notice(t("quickMenu.volumeConvertResult", { converted, skipped }));
+  }
+
+  /**
+   * 章节重新编号：先推演方案，无改动直接提示；有改动弹确认窗，确认后执行并反馈。
+   */
+  private handleChapterRenumber(): void {
+    const plan = planChapterRenumber(this.plugin);
+    if (plan.changes.length === 0) {
+      new Notice(t("quickMenu.renumberNoChange"));
+      return;
+    }
+    new ChapterRenumberModal(this.plugin.app, plan, () => void this.applyRenumberPlan(plan)).open();
+  }
+
+  /**
+   * 执行重编号方案并反馈：changed/skipped 取执行结果，unchanged 取推演值。
+   */
+  private async applyRenumberPlan(plan: ChapterRenumberPlan): Promise<void> {
+    const { changed, skipped } = await applyChapterRenumber(this.plugin, plan);
+    new Notice(t("quickMenu.renumberResult", { changed, unchanged: plan.unchanged, skipped }));
+  }
+
   setControlValue(key: string, value: unknown) {
     // 章节格式必须含 # 编号占位，否则拒绝写入并提示（防无编号命名与死循环）
     if (key === "chapterFormat" && typeof value === "string" && !value.includes("#")) {
       new Notice(t("settings.chapterFormatInvalid"));
+      void this.update();
+      return;
+    }
+    // 卷格式同样必须含 # 编号占位
+    if (key === "volumeFormat" && typeof value === "string" && !value.includes("#")) {
+      new Notice(t("settings.volumeFormatInvalid"));
       void this.update();
       return;
     }

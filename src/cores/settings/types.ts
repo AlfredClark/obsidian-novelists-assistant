@@ -3,6 +3,9 @@ import type { PluginLanguage } from "../i18n";
 /** 章节自动编号的样式：数字 / 中文小写 / 中文大写 */
 export type ChapterNumberStyle = "digit" | "chineseLower" | "chineseUpper";
 
+/** 新建章节的计数范围：分卷计数（各目录独立编号）/ 统一计数（正文目录全局最大编号 +1） */
+export type ChapterCountMode = "perVolume" | "unified";
+
 /**
  * 插件设置结构。声明式设置 API 按 key 直接读写此结构，
  * 新增字段须同步在 DEFAULT_SETTINGS 补默认值。
@@ -34,6 +37,9 @@ export interface NovelistsAssistantSettings {
   /** 快捷菜单 */
   chapterFormat: string; // 自动编号章节格式，# 为编号占位（如 "第 # 章"）
   chapterNumberStyle: ChapterNumberStyle; // 章节自动编号样式：数字/中文小写/中文大写
+  chapterCountMode: ChapterCountMode; // 新建章节的计数范围：分卷计数（各目录独立）/统一计数（正文目录全局最大 +1）
+  volumeFormat: string; // 自动编号卷格式，# 为编号占位（如 "第#卷"）
+  volumeNumberStyle: ChapterNumberStyle; // 卷自动编号样式：数字/中文小写/中文大写
   /** 导出 */
   exportClearBlankLines: boolean; // 是否删除导出文本中的全部空行（关闭时连续空行压缩为一个）
   exportKeepMarkup: boolean; // 是否保留 Markdown 标记（仅剔除文件头 frontmatter，不做其余清洗）

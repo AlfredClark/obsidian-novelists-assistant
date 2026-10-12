@@ -1,6 +1,6 @@
 {
   "name": "obsidian-novelists-assistant",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Enhance your novel writing experience with various writing tools to keep complex storylines organized",
   "license": "GPL-3.0-only",
   "author": "Alfred Clark",
@@ -31,27 +31,27 @@
     "unlink": "bun scripts/unlink-dist.ts"
   },
   "devDependencies": {
-    "@codemirror/language": "^6.12.4",
-    "@codemirror/state": "^6.7.4",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/state": "^6.7.6",
     "@eslint/js": "^10.0.1",
-    "@types/node": "^26.5.1",
+    "@types/node": "^26.6.5",
     "esbuild": "^0.28.2",
     "esbuild-svelte": "^0.9.5",
-    "eslint": "^10.10.0",
+    "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-obsidianmd": "^0.4.2",
-    "eslint-plugin-svelte": "^3.23.0",
-    "globals": "^17.12.0",
+    "eslint-plugin-svelte": "^3.23.1",
+    "globals": "^17.13.0",
     "jiti": "^2.7.0",
     "obsidian": "latest",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.10",
     "prettier-plugin-svelte": "^4.1.1",
-    "stylelint": "^17.15.0",
+    "stylelint": "^17.16.0",
     "stylelint-config-standard": "^40.0.0",
-    "svelte": "^5.57.0",
+    "svelte": "^5.57.2",
     "svelte-check": "^4.7.6",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.70.0"
+    "typescript-eslint": "^8.71.1"
   },
   "dependencies": {
     "nzh": "^1.0.14"

@@ -23,3 +23,4 @@ data.json
 
 # 排除 macOS Finder（系统资源管理器）视图状态
 .DS_Store
+/.commandcode/**
