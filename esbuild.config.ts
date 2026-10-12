@@ -31,8 +31,17 @@ const context = await esbuild.context({
   },
   entryPoints: ["src/main.ts"],
   bundle: true,
-  // css 必须内联进 JS：插件发布仅含 main.js，外部 css 无法随包分发
-  plugins: [esbuildSvelte({ compilerOptions: { css: "injected", dev: !prod } })],
+  // css 必须内联进 JS：插件发布仅含 main.js，外部 css 无法随包分发；
+  // cssHash 加 novel- 前缀：Svelte 默认按相对路径哈希，同路径的跨插件组件会撞 id 导致后挂载的样式被跳过
+  plugins: [
+    esbuildSvelte({
+      compilerOptions: {
+        css: "injected",
+        dev: !prod,
+        cssHash: ({ hash, filename, css }) => `novel-${hash(filename ?? css)}`,
+      },
+    }),
+  ],
   external: [
     "obsidian",
     "electron",
