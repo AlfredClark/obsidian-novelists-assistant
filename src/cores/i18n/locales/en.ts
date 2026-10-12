@@ -173,16 +173,19 @@ const en = {
     volumeNameTitle: "Name the new volume",
   },
   sidebar: {
+    back: "Back",
+    deleted: "File deleted",
+    empty: "No notes yet",
+    groupEmpty: "Empty group",
+    missing: "Directory not found",
+    noMatch: "No matches",
     tabs: {
-      page1: "Page 1",
-      page2: "Page 2",
-      page3: "Page 3",
+      lore: "Lore",
+      outline: "Outline",
     },
-    placeholders: {
-      page1: "Page 1 placeholder",
-      page2: "Page 2 placeholder",
-      page3: "Page 3 placeholder",
-    },
+    searchPlaceholder: "Search",
+    unconfigured: "Directory not configured — pick it in settings",
+    ungrouped: "Ungrouped",
   },
 } as const;
 

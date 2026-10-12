@@ -96,9 +96,9 @@
 ### sidebar（侧边栏）
 
 - 三段式组织；cores.ts 导出 `initSidebar(plugin)`，经 cores 聚合层在 initSettings 之后调用（i18n 已就绪，`t()` 可安全求值）；`registerView`/`addRibbonIcon` 由 Obsidian 卸载自动回收，无需清理函数
-- `SIDEBAR_VIEW_TYPE` 常量与 `SidebarPage`（"page1" | "page2" | "page3"）位于 types.ts；新增页面时扩展联合类型并在组件切换处追加分支
-- `SidebarView extends ItemView`：`getDisplayText` 与 Ribbon 提示用插件名常量（与 manifest name 一致，不国际化）；`onOpen` 经 `mountComponent` 挂载 Svelte 根组件，`onClose` 回收；`activateSidebar(plugin)` 已有视图叶子则 `revealLeaf` 激活，否则 `getRightLeaf(false)` 新建叶子并打开，仅负责激活不做关闭
-- 组件位于 `components/`：`SidebarRoot.svelte` 以 `$state` 维护 `activePage` 并渲染 tab 按钮栏 + `{#if}` 切换三个占位页面组件（PageOne/Two/Three），tab 与占位文案经 `t()` 翻译；语言切换经 `subscribeLanguageChange` 订阅 + `{#key langTick}` 重建内容块（见 i18n 说明，`activePage` 在块外保留，页面切换不丢）
+- `SIDEBAR_VIEW_TYPE` 常量、`SidebarPage`（"lore" | "outline"）、`SIDEBAR_DIR_KEYS`（页面到目录设置字段映射）、`DirGroup`/`DirModel` 位于 types.ts；`buildDirectoryModel(plugin, dir)` 位于 cores.ts（一层分组 + 未分组区，深层忽略，仅 md，数字感知排序，纯内存遍历）
+- `SidebarView extends ItemView`：`getDisplayText` 与 Ribbon 提示用插件名常量（与 manifest name 一致，不国际化）；构造函数接收插件实例并经挂载属性透传给页面组件（`this.app` 是 Obsidian App，不可用）；`onOpen` 经 `mountComponent` 挂载 Svelte 根组件，`onClose` 回收；`activateSidebar(plugin)` 已有视图叶子则 `revealLeaf` 激活，否则 `getRightLeaf(false)` 新建叶子并打开，仅负责激活不做关闭
+- 组件位于 `components/`：`SidebarRoot.svelte` 以 `$state` 维护 `activePage` + `readingFile` 状态机 + 跨页保留的 `query`（列表态显示 tabs 与右侧搜索框，阅读态隐藏 tabs 仅显示返回按钮，按路径 `#key` 切文件归零滚动）；`DirectoryPage.svelte` 为通用目录列表（props 传递 `plugin`/`page`/`query`/`onopen`，目录经 `SIDEBAR_DIR_KEYS` 解析，`filterDirectoryModel` 纯函数经 `$derived` 过滤，分组用原生 `<details>`）；`ReadingPage.svelte` 经 `MarkdownRenderer.render` 渲染预览（自建 `Component` 对齐生命周期，`modify` 按路径重渲染，`delete` 置空提示）；页面内订阅一律 `onMount` + `offref` 退订，不用 `plugin.registerEvent`（防 `#key` 重建叠加）；样式用 `novel-side-*` 自有类，不复用 `.nav-file-title`（防字数统计 MutationObserver 顺手装饰）；设置页改目录无事件，开着的侧栏下次重开刷新
 - 依赖方向：值导入 i18n、utils/svelte，仅 type-only 导入 main，无运行时循环
 
 ## utils（工具）

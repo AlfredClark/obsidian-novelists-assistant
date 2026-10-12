@@ -1,5 +1,5 @@
 import { mount, unmount } from "svelte";
-import type { Component, ComponentProps } from "svelte";
+import type { Component, MountOptions } from "svelte";
 
 /** 组件挂载到容器后的句柄，统一组件的回收入口 */
 export interface MountedComponent<T = unknown> {
@@ -21,13 +21,14 @@ export interface MountedComponent<T = unknown> {
  * @param props 传给组件的属性；精确类型由 svelte-check 校验
  * @returns 挂载句柄，destroy() 卸载组件并清空容器
  */
-export function mountComponent<T extends Component>(
+export function mountComponent<Props extends Record<string, unknown>>(
   target: HTMLElement,
-  component: T,
-  props?: ComponentProps<T>,
+  component: Component<Props>,
+  props?: Props,
 ): MountedComponent {
   target.empty();
-  const instance = mount(component, { target, props });
+  // mount 的 options 为条件类型，泛型 Props 下无法直接推导；此处一次性收窄，调用方仍享完整 props 推导
+  const instance = mount(component, { target, props } as MountOptions<Props>);
   return {
     instance,
     destroy: () => {

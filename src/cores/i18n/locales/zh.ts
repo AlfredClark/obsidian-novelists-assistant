@@ -170,16 +170,19 @@ export const zh: TranslationResource = {
     volumeNameTitle: "输入分卷名称",
   },
   sidebar: {
+    back: "返回",
+    deleted: "文件已删除",
+    empty: "暂无笔记",
+    groupEmpty: "空分组",
+    missing: "目录不存在",
+    noMatch: "无匹配结果",
     tabs: {
-      page1: "页面 1",
-      page2: "页面 2",
-      page3: "页面 3",
+      lore: "设定",
+      outline: "纲要",
     },
-    placeholders: {
-      page1: "页面 1 占位文本",
-      page2: "页面 2 占位文本",
-      page3: "页面 3 占位文本",
-    },
+    searchPlaceholder: "搜索",
+    unconfigured: "未配置目录，请在设置中选择",
+    ungrouped: "未分组",
   },
 };
 
@@ -353,15 +356,18 @@ export const zhTW: TranslationResource = {
     volumeNameTitle: "輸入分卷名稱",
   },
   sidebar: {
+    back: "返回",
+    deleted: "檔案已刪除",
+    empty: "暫無筆記",
+    groupEmpty: "空群組",
+    missing: "目錄不存在",
+    noMatch: "無匹配結果",
     tabs: {
-      page1: "頁面 1",
-      page2: "頁面 2",
-      page3: "頁面 3",
+      lore: "設定",
+      outline: "綱要",
     },
-    placeholders: {
-      page1: "頁面 1 佔位文字",
-      page2: "頁面 2 佔位文字",
-      page3: "頁面 3 佔位文字",
-    },
+    searchPlaceholder: "搜尋",
+    unconfigured: "未設定目錄，請在設定中選擇",
+    ungrouped: "未分組",
   },
 };
