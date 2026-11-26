@@ -110,7 +110,7 @@ export async function createNextChapter(plugin: NovelistsAssistantPlugin, target
   }
   // 编号冲突时递增直至可用，避免 create 报错中断
   let next = max + 1;
-  let path = "";
+  let path: string;
   do {
     path = `${dir}/${chapterFormat.replace(/#/g, encodeChapterNumber(next, style))}.md`;
     next += 1;
@@ -198,7 +198,7 @@ export function getNextVolumeName(plugin: NovelistsAssistantPlugin): string | nu
   }
   // 编号冲突时递增直至可用，避免创建时报错中断
   let next = max + 1;
-  let name = "";
+  let name: string;
   do {
     name = volumeFormat.replace(/#/g, encodeChapterNumber(next, style));
     next += 1;
@@ -440,7 +440,7 @@ export async function applyChapterRenumber(
   for (const change of plan.changes) {
     const dir = change.file.parent?.path ?? "";
     // 临时名避让现存路径与全部终名，防阶段一误占
-    let temp = "";
+    let temp: string;
     do {
       temp = `${dir}/${RENUMBER_TEMP_PREFIX}${index}.md`;
       index += 1;

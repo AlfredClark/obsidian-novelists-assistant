@@ -22,9 +22,10 @@ export default defineConfig(
   ...obsidianmd.configs.recommendedWithLocalesEn,
   ...svelte.configs["flat/recommended"],
   {
-    files: ["package.json"],
-    // package.json 以 json 语言解析（obsidianmd 官方块），无 svelte 解析上下文，
-    // svelte flat/recommended 中未限定 files 的规则会因 parserServices 缺失而崩溃
+    // package.json / manifest.json 以 json 语言解析（obsidianmd 官方块），LICENSE 系纯文本，
+    // 均无 svelte 解析上下文，svelte flat/recommended 中未限定 files 的规则会因 parserServices 缺失而崩溃；
+    // obsidianmd 0.6 起为 manifest.json 与 LICENSE 供给匹配配置（此前直接 ignored），故需一并关闭 svelte 规则
+    files: ["package.json", "manifest.json", "LICENSE", "LICENSE.*"],
     rules: Object.fromEntries(Object.keys(svelte.rules).map((name) => [`svelte/${name}`, "off"])),
   },
   {
