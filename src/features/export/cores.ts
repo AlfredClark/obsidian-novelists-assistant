@@ -52,7 +52,7 @@ async function buildExportPayload(plugin: NovelistsAssistantPlugin, file: TFile)
  */
 function downloadTextFile(name: string, text: string): void {
   const url = URL.createObjectURL(new Blob([text], { type: EXPORT_MIME_TYPE }));
-  const link = document.body.createEl("a", { href: url });
+  const link = window.activeDocument.body.createEl("a", { href: url });
   link.download = name;
   link.click();
   link.remove();

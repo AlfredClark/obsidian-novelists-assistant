@@ -50,7 +50,7 @@ function escapeAttrValue(value: string): string {
 
 /** 按路径查找文件标题元素；重渲染后旧节点失效，每次按需查询不缓存引用 */
 function findTitleElement(path: string): HTMLElement | null {
-  return document.querySelector<HTMLElement>(`.nav-file-title[data-path="${escapeAttrValue(path)}"]`);
+  return window.activeDocument.querySelector<HTMLElement>(`.nav-file-title[data-path="${escapeAttrValue(path)}"]`);
 }
 
 /** 按 mtime 失效缓存读取文件字数：未变直接复用，变更后重算并回写 */
@@ -90,7 +90,7 @@ function decorateTitle(plugin: NovelistsAssistantPlugin, element: HTMLElement): 
 
 /** 移除全部统计 span 与标记：开关关闭时清空残留，重新开启后再次装饰（幂等） */
 function removeAllWordCounts(): void {
-  document.querySelectorAll(`.nav-file-title.${PROCESSED_CLASS}`).forEach((element) => {
+  window.activeDocument.querySelectorAll(`.nav-file-title.${PROCESSED_CLASS}`).forEach((element) => {
     element.classList.remove(PROCESSED_CLASS);
     element.querySelector(`:scope > .${WORD_COUNT_CLASS}`)?.remove();
   });
@@ -106,7 +106,7 @@ export function refreshWordCount(plugin: NovelistsAssistantPlugin): void {
     removeAllWordCounts();
     return;
   }
-  document.querySelectorAll<HTMLElement>(".nav-file-title[data-path]").forEach((element) => {
+  window.activeDocument.querySelectorAll<HTMLElement>(".nav-file-title[data-path]").forEach((element) => {
     if (element.classList.contains(PROCESSED_CLASS)) return;
     decorateTitle(plugin, element);
   });
@@ -119,7 +119,7 @@ export function refreshWordCount(plugin: NovelistsAssistantPlugin): void {
  * @param plugin 插件实例
  */
 export function refreshWordCountTexts(plugin: NovelistsAssistantPlugin): void {
-  document.querySelectorAll<HTMLElement>(`.nav-file-title.${PROCESSED_CLASS}[data-path]`).forEach((element) => {
+  window.activeDocument.querySelectorAll<HTMLElement>(`.nav-file-title.${PROCESSED_CLASS}[data-path]`).forEach((element) => {
     const path = element.getAttribute("data-path");
     if (!path) return;
     const file = plugin.app.vault.getAbstractFileByPath(path);
@@ -248,7 +248,7 @@ function decorateFolderTitle(plugin: NovelistsAssistantPlugin, element: HTMLElem
 
 /** 移除全部文件夹统计 span 与标记：开关关闭时清空残留，重新开启后再次装饰（幂等） */
 function removeAllFolderCounts(): void {
-  document.querySelectorAll(`.nav-folder-title.${PROCESSED_CLASS}`).forEach((element) => {
+  window.activeDocument.querySelectorAll(`.nav-folder-title.${PROCESSED_CLASS}`).forEach((element) => {
     element.classList.remove(PROCESSED_CLASS);
     element.querySelector(`:scope > .${WORD_COUNT_CLASS}`)?.remove();
   });
@@ -265,7 +265,7 @@ export function refreshFolderCounts(plugin: NovelistsAssistantPlugin): void {
     removeAllFolderCounts();
     return;
   }
-  document.querySelectorAll<HTMLElement>(".nav-folder-title[data-path]").forEach((element) => {
+  window.activeDocument.querySelectorAll<HTMLElement>(".nav-folder-title[data-path]").forEach((element) => {
     const path = element.getAttribute("data-path");
     if (!path) return;
     const role = resolveFolderRole(plugin, path);
@@ -334,7 +334,7 @@ function scheduleStatusRefresh(plugin: NovelistsAssistantPlugin): void {
  * 正文文件夹的直接子文件夹同样追加「总字数 | 章节数」（按自身前缀递归）；
  * 状态栏追加当前文件字数（复用 wordCount 开关与 wordCountUnit 单位），
  * 并自动禁用核心 word-count 插件避免两个数值并存。
- * 文件树项渲染无现成事件：MutationObserver 监听主文档子树（debounce）捕获新增项，
+ * 文件树项渲染无现成事件：MutationObserver 监听活动文档子树（初始化时即主文档，debounce）捕获新增项，
  * layout-change 兜底折叠/排序等重渲染；modify 事件按路径即时更新字数并联动目录总字数，
  * create/delete/rename 清文件夹缓存并重扫（折叠文件夹无子节点 DOM 变更，MutationObserver 兜不住）。
  * @param plugin 插件实例
@@ -342,7 +342,7 @@ function scheduleStatusRefresh(plugin: NovelistsAssistantPlugin): void {
  */
 export function initWordCount(plugin: NovelistsAssistantPlugin): () => void {
   const observer = new MutationObserver(() => scheduleScan(plugin));
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(window.activeDocument.body, { childList: true, subtree: true });
 
   statusBarEl = plugin.addStatusBarItem();
   // 核心 word-count 插件统计原始文本，与自定义统计并存会显示两个不同数值：开启时自动禁用

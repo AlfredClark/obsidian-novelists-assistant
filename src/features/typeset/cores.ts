@@ -113,11 +113,11 @@ function removeAllTypeset(plugin: NovelistsAssistantPlugin): void {
 /** 去除段落首尾空白：仅处理首尾的直接文本节点（软换行行尾空格由 markdown-it 残留为文本，内联元素包裹的空白不处理） */
 function trimParagraphEdges(paragraph: Element): void {
   const first = paragraph.firstChild;
-  if (first instanceof Text) {
+  if (first?.instanceOf(Text)) {
     first.textContent = first.textContent?.trimStart() ?? "";
   }
   const last = paragraph.lastChild;
-  if (last instanceof Text) {
+  if (last?.instanceOf(Text)) {
     last.textContent = last.textContent?.trimEnd() ?? "";
   }
 }
